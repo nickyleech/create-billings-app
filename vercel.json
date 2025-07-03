@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/generate-content.js": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "ANTHROPIC_API_KEY": "@anthropic-api-key"
+  }
+}
