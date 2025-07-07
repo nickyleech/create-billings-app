@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1000,
         messages: [
           {
@@ -58,3 +58,5 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Failed to generate content' });
   }
 }
+
+module.exports = handler;

@@ -1,6 +1,6 @@
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://create-billings.vercel.app/' 
-  : 'http://localhost:3000';
+  ? 'https://create-billings.vercel.app' 
+  : 'http://localhost:3001';
 
 export const generateContent = async (prompt) => {
   try {
