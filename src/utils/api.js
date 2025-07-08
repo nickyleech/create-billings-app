@@ -4,11 +4,16 @@ export const generateContent = async (prompt, userId) => {
     const apiKey = localStorage.getItem(`anthropic_api_key_${userId}`);
     
     if (!apiKey) {
-      throw new Error('No API key found. Please set your Anthropic API key in Admin settings.');
+      throw new Error('No API key found. Please set your Anthropic API key in Settings.');
     }
 
+    // Determine the API endpoint based on environment
+    const API_BASE_URL = process.env.NODE_ENV === 'production' 
+      ? 'https://create-tv-billings.vercel.app/api' 
+      : 'http://localhost:3001/api';
+
     // Call the server-side API endpoint which handles the Anthropic API
-    const response = await fetch('http://localhost:3001/api/generate-content', {
+    const response = await fetch(`${API_BASE_URL}/generate-content`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -23,7 +28,7 @@ export const generateContent = async (prompt, userId) => {
       const errorData = await response.json().catch(() => null);
       
       if (response.status === 401) {
-        throw new Error('Invalid API key. Please check your Anthropic API key in Admin settings.');
+        throw new Error('Invalid API key. Please check your Anthropic API key in Settings.');
       } else if (response.status === 429) {
         throw new Error('API rate limit exceeded. Please try again later.');
       } else if (response.status === 400) {
