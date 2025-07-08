@@ -121,9 +121,8 @@ npm start
 - Quick-add presets for common platforms
 
 #### Style Presets
-- Click "Style Presets" to create brand-specific guidelines
+- Click "Style Presets" to create genre-specific guidelines
 - Define custom style rules (British English, descriptors, etc.)
-- Add brand keywords to preserve in all versions
 - Set forbidden words to avoid
 - Save and reuse presets across projects
 

@@ -1,9 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://create-billings.vercel.app' 
-  : 'http://localhost:3001';
-
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -16,75 +12,73 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored token on mount
-    const storedToken = localStorage.getItem('auth_token');
-    const storedUser = localStorage.getItem('user_data');
+    // Check for stored user on mount
+    const storedUser = localStorage.getItem('current_user');
     
-    if (storedToken && storedUser) {
-      setToken(storedToken);
+    if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, pin) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth?action=login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Login failed');
+      // Get stored users
+      const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+      const user = users.find(u => u.email === email);
+      
+      if (!user) {
+        throw new Error('User not found');
       }
-
-      const data = await response.json();
       
-      setUser(data.user);
-      setToken(data.token);
+      if (user.pin !== pin) {
+        throw new Error('Invalid PIN');
+      }
       
-      localStorage.setItem('auth_token', data.token);
-      localStorage.setItem('user_data', JSON.stringify(data.user));
+      // Update last login
+      user.lastLogin = new Date().toISOString();
+      const updatedUsers = users.map(u => u.email === email ? user : u);
+      localStorage.setItem('app_users', JSON.stringify(updatedUsers));
       
-      return data;
+      setUser(user);
+      localStorage.setItem('current_user', JSON.stringify(user));
+      
+      return { user };
     } catch (error) {
       throw error;
     }
   };
 
-  const register = async (userData) => {
+  const register = async (email, pin) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth?action=register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Registration failed');
+      // Get existing users
+      const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+      
+      // Check if user already exists
+      if (users.find(u => u.email === email)) {
+        throw new Error('User already exists');
       }
-
-      const data = await response.json();
       
-      setUser(data.user);
-      setToken(data.token);
+      // Create new user
+      const newUser = {
+        id: Date.now().toString(),
+        email,
+        pin,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString()
+      };
       
-      localStorage.setItem('auth_token', data.token);
-      localStorage.setItem('user_data', JSON.stringify(data.user));
+      users.push(newUser);
+      localStorage.setItem('app_users', JSON.stringify(users));
       
-      return data;
+      setUser(newUser);
+      localStorage.setItem('current_user', JSON.stringify(newUser));
+      
+      return { user: newUser };
     } catch (error) {
       throw error;
     }
@@ -92,55 +86,61 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    setToken(null);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+    localStorage.removeItem('current_user');
   };
 
-  const updateProfile = async (updates) => {
+  const resetPin = async (email) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth?action=profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(updates),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Profile update failed');
+      // Generate a temporary PIN
+      const tempPin = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      // Get users
+      const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+      const userIndex = users.findIndex(u => u.email === email);
+      
+      if (userIndex === -1) {
+        throw new Error('User not found');
       }
-
-      const data = await response.json();
       
-      setUser(data.user);
-      localStorage.setItem('user_data', JSON.stringify(data.user));
+      // Update user with temporary PIN
+      users[userIndex].pin = tempPin;
+      users[userIndex].tempPin = true;
+      localStorage.setItem('app_users', JSON.stringify(users));
       
-      return data;
+      // In a real app, you'd send this via email
+      // For demo purposes, we'll show it in an alert
+      alert(`Your temporary PIN is: ${tempPin}\n\nPlease use this to log in and set a new PIN.`);
+      
+      return { message: 'Temporary PIN sent to your email' };
     } catch (error) {
       throw error;
     }
   };
 
-  const changePassword = async (currentPassword, newPassword) => {
+  const changePin = async (newPin) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth?action=change-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Password change failed');
+      if (!user) {
+        throw new Error('User not authenticated');
       }
-
-      return await response.json();
+      
+      const users = JSON.parse(localStorage.getItem('app_users') || '[]');
+      const userIndex = users.findIndex(u => u.id === user.id);
+      
+      if (userIndex === -1) {
+        throw new Error('User not found');
+      }
+      
+      // Update PIN
+      users[userIndex].pin = newPin;
+      users[userIndex].tempPin = false;
+      localStorage.setItem('app_users', JSON.stringify(users));
+      
+      // Update current user
+      const updatedUser = { ...user, pin: newPin, tempPin: false };
+      setUser(updatedUser);
+      localStorage.setItem('current_user', JSON.stringify(updatedUser));
+      
+      return { message: 'PIN updated successfully' };
     } catch (error) {
       throw error;
     }
@@ -148,14 +148,13 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
-    token,
     loading,
     login,
     register,
     logout,
-    updateProfile,
-    changePassword,
-    isAuthenticated: !!user && !!token,
+    resetPin,
+    changePin,
+    isAuthenticated: !!user,
   };
 
   return (

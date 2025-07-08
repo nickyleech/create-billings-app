@@ -23,12 +23,27 @@ async function handler(req, res) {
     return res.status(400).json({ error: 'Prompt is required' });
   }
 
+  // Get API key from Authorization header
+  const authHeader = req.headers.authorization;
+  let apiKey;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    apiKey = authHeader.substring(7); // Remove 'Bearer ' prefix
+  } else {
+    // Fallback to environment variable if no user key provided
+    apiKey = process.env.ANTHROPIC_API_KEY;
+  }
+
+  if (!apiKey) {
+    return res.status(401).json({ error: 'No API key provided' });
+  }
+
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({

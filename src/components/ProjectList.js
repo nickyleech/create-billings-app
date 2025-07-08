@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthProvider';
-import { Folder, Plus, Calendar, FileText, MoreVertical, Edit, Trash2, Settings, Monitor, Tag, Filter } from 'lucide-react';
+import { Folder, Plus, Calendar, FileText, MoreVertical, Edit, Trash2, Monitor, Tag, Filter } from 'lucide-react';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://create-billings.vercel.app' 
@@ -16,11 +16,7 @@ const ProjectList = ({ onSelectProject, onCreateProject }) => {
 
   const { token } = useAuth();
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/projects?action=list`, {
         headers: {
@@ -39,7 +35,11 @@ const ProjectList = ({ onSelectProject, onCreateProject }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handleDeleteProject = async (projectId) => {
     if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {

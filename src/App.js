@@ -1,26 +1,38 @@
-import React, { useState } from 'react';
-import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle } from 'lucide-react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginForm from './components/LoginForm';
-import RegisterForm from './components/RegisterForm';
-import ProjectList from './components/ProjectList';
-import Timeline from './components/Timeline';
-import CreateProjectModal from './components/CreateProjectModal';
 import CustomLimitsModal from './components/CustomLimitsModal';
 import StylePresetsModal from './components/StylePresetsModal';
 import BatchProcessingModal from './components/BatchProcessingModal';
 import ExportModal from './components/ExportModal';
+import HistoryModal from './components/HistoryModal';
+import SettingsModal from './components/SettingsModal';
+import HelpModal from './components/HelpModal';
 import { generateContent } from './utils/api';
 
-// Authentication wrapper component - now just passes through to MainApp
+// Authentication wrapper component
 const AuthWrapper = () => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <LoginForm />;
+  }
+  
   return <MainApp />;
 };
 
 // Main application component
 const MainApp = () => {
-  const [currentView, setCurrentView] = useState('timeline'); // 'timeline', 'projects', or 'billing-tool'
-  const [selectedProject, setSelectedProject] = useState(null);
+  const { user, logout } = useAuth();
   const [inputText, setInputText] = useState('');
   const [versions, setVersions] = useState({});
   const [isGenerating, setIsGenerating] = useState(false);
@@ -34,56 +46,71 @@ const MainApp = () => {
   const [showPresetsModal, setShowPresetsModal] = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [activePreset, setActivePreset] = useState(null);
+  const [selectedStyle, setSelectedStyle] = useState('default');
+  const [hasCustomPresets, setHasCustomPresets] = useState(false);
 
-  // Remove auth dependency for now
-  const user = null;
+  // Built-in style presets - only show Default by default
+  const defaultStyle = { id: 'default', name: 'Default Style', description: 'Standard PA TV style guide formatting' };
+  
+  const additionalBuiltInStyles = [
+    { id: 'drama', name: 'Drama', description: 'Dramatic storytelling style' },
+    { id: 'soap', name: 'Soap', description: 'Soap opera style' },
+    { id: 'quiz', name: 'Quiz', description: 'Quiz show style' },
+    { id: 'sitcom', name: 'Sitcom', description: 'Situational comedy style' },
+    { id: 'movie', name: 'Movie', description: 'Feature film style' },
+    { id: 'documentary', name: 'Documentary', description: 'Documentary style' },
+    { id: 'music', name: 'Music', description: 'Music program style' },
+    { id: 'sport', name: 'Sport', description: 'Sports coverage style' }
+  ];
 
-  const handleCreateProject = async (projectData) => {
-    try {
-      // This would typically call an API endpoint
-      // For now, we'll just simulate project creation
-      console.log('Creating project:', projectData);
-      // After successful creation, you might want to refresh the project list
-      // or navigate to the new project
-    } catch (error) {
-      console.error('Error creating project:', error);
-      throw error;
-    }
-  };
+  // Show additional styles only if custom presets exist
+  const builtInStyles = hasCustomPresets 
+    ? [defaultStyle, ...additionalBuiltInStyles]
+    : [defaultStyle];
 
-  const saveToTimeline = async (originalText, versions, limits, preset) => {
-    const API_BASE_URL = process.env.NODE_ENV === 'production' 
-      ? 'https://create-billings.vercel.app' 
-      : 'http://localhost:3001';
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/copy-entries`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          original_text: originalText,
-          custom_versions: versions,
-          custom_limits: limits,
-          style_preset: preset?.name || null,
-          user_name: 'Anonymous Creator',
-          is_public: true
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save to timeline');
+  // Check for custom presets on component mount and when user changes
+  useEffect(() => {
+    if (user) {
+      try {
+        const savedPresets = localStorage.getItem(`style_presets_${user.id}`);
+        const presets = savedPresets ? JSON.parse(savedPresets) : [];
+        setHasCustomPresets(presets.length > 0);
+      } catch (error) {
+        console.error('Error checking custom presets:', error);
+        setHasCustomPresets(false);
       }
+    }
+  }, [user]);
 
-      return await response.json();
+  const saveToHistory = async (originalText, versions, limits, preset, style) => {
+    try {
+      const historyItem = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        originalText,
+        versions,
+        limits,
+        preset: preset?.name || null,
+        style: style || null,
+        userId: user.id
+      };
+      
+      // Save to localStorage for now
+      const existingHistory = JSON.parse(localStorage.getItem('billingHistory') || '[]');
+      existingHistory.unshift(historyItem);
+      localStorage.setItem('billingHistory', JSON.stringify(existingHistory));
+      
+      return historyItem;
     } catch (error) {
-      console.error('Error saving to timeline:', error);
+      console.error('Error saving to history:', error);
       throw error;
     }
   };
+
 
   const copyToClipboard = async (text, version) => {
     try {
@@ -108,7 +135,6 @@ const MainApp = () => {
         `- ${limit.label}: Maximum ${limit.value} ${limit.type} including spaces`
       ).join('\n');
 
-      const resultKeys = customLimits.map((_, index) => `version${index + 1}`);
       const resultFormat = customLimits.reduce((acc, limit, index) => {
         acc[`version${index + 1}`] = `${limit.label} under ${limit.value} ${limit.type}`;
         return acc;
@@ -122,7 +148,6 @@ const MainApp = () => {
         avoidRepetition: true
       };
 
-      const brandKeywords = activePreset?.brand_keywords || [];
       const forbiddenWords = activePreset?.forbidden_words || [];
 
       let styleInstructions = [];
@@ -149,16 +174,12 @@ const MainApp = () => {
       styleInstructions.push("7. Use proper compass point capitalisation");
       styleInstructions.push("8. Include accented characters where appropriate");
 
-      if (brandKeywords.length > 0) {
-        styleInstructions.push(`9. Try to preserve these important brand keywords: ${brandKeywords.join(', ')}`);
-      }
-
       if (forbiddenWords.length > 0) {
-        styleInstructions.push(`10. NEVER use these forbidden words: ${forbiddenWords.join(', ')}`);
+        styleInstructions.push(`9. NEVER use these forbidden words: ${forbiddenWords.join(', ')}`);
       }
 
       if (styleRules.customInstructions) {
-        styleInstructions.push(`11. Additional instructions: ${styleRules.customInstructions}`);
+        styleInstructions.push(`10. Additional instructions: ${styleRules.customInstructions}`);
       }
 
       const presetName = activePreset ? ` using the "${activePreset.name}" style preset` : '';
@@ -182,7 +203,7 @@ ${JSON.stringify(resultFormat, null, 2)}
 
 Your entire response must be valid JSON only. Do not include any other text or formatting.`;
 
-      const response = await generateContent(prompt);
+      const response = await generateContent(prompt, user.id);
       const parsedResponse = JSON.parse(response);
       
       // Map the response to our version keys
@@ -198,11 +219,11 @@ Your entire response must be valid JSON only. Do not include any other text or f
       setVersions(newVersions);
       setCopiedStates(newCopiedStates);
 
-      // Save to timeline for public viewing
+      // Save to history
       try {
-        await saveToTimeline(inputText, newVersions, customLimits, activePreset);
+        await saveToHistory(inputText, newVersions, customLimits, activePreset, selectedStyle);
       } catch (saveError) {
-        console.warn('Failed to save to timeline:', saveError);
+        console.warn('Failed to save to history:', saveError);
         // Don't show error to user as this is non-critical
       }
     } catch (error) {
@@ -255,6 +276,20 @@ Your entire response must be valid JSON only. Do not include any other text or f
     return text.length; // characters
   };
 
+  // Function to refresh custom presets check
+  const refreshCustomPresets = () => {
+    if (user) {
+      try {
+        const savedPresets = localStorage.getItem(`style_presets_${user.id}`);
+        const presets = savedPresets ? JSON.parse(savedPresets) : [];
+        setHasCustomPresets(presets.length > 0);
+      } catch (error) {
+        console.error('Error checking custom presets:', error);
+        setHasCustomPresets(false);
+      }
+    }
+  };
+
   const handleApplyPreset = (preset) => {
     // Apply character limits from preset
     if (preset.character_limits && preset.character_limits.length > 0) {
@@ -277,6 +312,9 @@ Your entire response must be valid JSON only. Do not include any other text or f
     
     setVersions(emptyVersions);
     setCopiedStates(emptyCopiedStates);
+    
+    // Refresh the custom presets check in case this was the first preset created
+    refreshCustomPresets();
   };
 
   const generateBatchContent = async (inputText, limits, preset) => {
@@ -292,7 +330,6 @@ Your entire response must be valid JSON only. Do not include any other text or f
       avoidRepetition: true
     };
 
-    const brandKeywords = presetToUse?.brand_keywords || [];
     const forbiddenWords = presetToUse?.forbidden_words || [];
 
     let styleInstructions = [];
@@ -319,16 +356,12 @@ Your entire response must be valid JSON only. Do not include any other text or f
     styleInstructions.push("7. Use proper compass point capitalisation");
     styleInstructions.push("8. Include accented characters where appropriate");
 
-    if (brandKeywords.length > 0) {
-      styleInstructions.push(`9. Try to preserve these important brand keywords: ${brandKeywords.join(', ')}`);
-    }
-
     if (forbiddenWords.length > 0) {
-      styleInstructions.push(`10. NEVER use these forbidden words: ${forbiddenWords.join(', ')}`);
+      styleInstructions.push(`9. NEVER use these forbidden words: ${forbiddenWords.join(', ')}`);
     }
 
     if (styleRules.customInstructions) {
-      styleInstructions.push(`11. Additional instructions: ${styleRules.customInstructions}`);
+      styleInstructions.push(`10. Additional instructions: ${styleRules.customInstructions}`);
     }
 
     const limitsText = limitsToUse.map((limit, index) => 
@@ -361,7 +394,7 @@ ${JSON.stringify(resultFormat, null, 2)}
 
 Your entire response must be valid JSON only. Do not include any other text or formatting.`;
 
-    const response = await generateContent(prompt);
+    const response = await generateContent(prompt, user.id);
     const parsedResponse = JSON.parse(response);
     
     // Map the response to our version keys
@@ -380,82 +413,51 @@ Your entire response must be valid JSON only. Do not include any other text or f
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <h1 
-            className="text-2xl font-light text-gray-900 cursor-pointer hover:text-blue-600"
-            onClick={() => setCurrentView('projects')}
-          >
+          <h1 className="text-2xl font-light text-gray-900">
             Create Billings Pro
           </h1>
-          {selectedProject && (
-            <div className="flex items-center space-x-2 text-gray-600">
-              <span>/</span>
-              <span className="font-medium">{selectedProject.name}</span>
-            </div>
-          )}
         </div>
         
         <div className="flex items-center space-x-4">
-          <nav className="flex space-x-4">
-            <button
-              onClick={() => setCurrentView('timeline')}
-              className={`px-3 py-1 rounded-md transition-colors ${
-                currentView === 'timeline' 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Timeline
-            </button>
-            <button
-              onClick={() => setCurrentView('projects')}
-              className={`px-3 py-1 rounded-md transition-colors ${
-                currentView === 'projects' 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Projects
-            </button>
-            <button
-              onClick={() => setCurrentView('billing-tool')}
-              className={`px-3 py-1 rounded-md transition-colors ${
-                currentView === 'billing-tool' 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Billing Tool
-            </button>
-          </nav>
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="flex items-center space-x-2 px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <HelpCircle className="w-4 h-4" />
+            <span>Help</span>
+          </button>
+          <button
+            onClick={() => setShowHistoryModal(true)}
+            className="flex items-center space-x-2 px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <History className="w-4 h-4" />
+            <span>History</span>
+          </button>
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="flex items-center space-x-2 px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Settings</span>
+          </button>
+          <div className="flex items-center space-x-2 text-gray-600">
+            <User className="w-4 h-4" />
+            <span className="text-sm">{user.email}</span>
+          </div>
+          <button
+            onClick={logout}
+            className="flex items-center space-x-2 px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </button>
         </div>
       </div>
     </header>
   );
 
   const renderContent = () => {
-    switch (currentView) {
-      case 'timeline':
-        return <Timeline />;
-        
-      case 'projects':
-        return (
-          <ProjectList 
-            onSelectProject={(project) => {
-              setSelectedProject(project);
-              setCurrentView('billing-tool');
-            }}
-            onCreateProject={() => {
-              setShowCreateProjectModal(true);
-            }}
-          />
-        );
-      
-      case 'billing-tool':
-        return <BillingTool />;
-      
-      default:
-        return <Timeline />;
-    }
+    return <BillingTool />;
   };
 
   // Billing tool component (the original functionality)
@@ -511,7 +513,32 @@ Your entire response must be valid JSON only. Do not include any other text or f
             </div>
           </div>
         )}
-          <textarea
+        
+        <div className="mb-4">
+          <label htmlFor="style-select" className="block text-sm font-medium text-gray-700 mb-2">
+            Select Style
+          </label>
+          <div className="relative">
+            <select
+              id="style-select"
+              value={selectedStyle}
+              onChange={(e) => setSelectedStyle(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-sm"
+            >
+              {builtInStyles.map(style => (
+                <option key={style.id} value={style.id}>{style.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+          {selectedStyle && (
+            <p className="text-xs text-gray-500 mt-1">
+              {builtInStyles.find(s => s.id === selectedStyle)?.description}
+            </p>
+          )}
+        </div>
+        
+        <textarea
             id="input-text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -630,6 +657,7 @@ Your entire response must be valid JSON only. Do not include any other text or f
         isOpen={showPresetsModal}
         onClose={() => setShowPresetsModal(false)}
         onApplyPreset={handleApplyPreset}
+        onPresetsChange={refreshCustomPresets}
       />
       
       <BatchProcessingModal
@@ -649,10 +677,21 @@ Your entire response must be valid JSON only. Do not include any other text or f
         activePreset={activePreset}
       />
       
-      <CreateProjectModal
-        isOpen={showCreateProjectModal}
-        onClose={() => setShowCreateProjectModal(false)}
-        onCreateProject={handleCreateProject}
+      <HistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        user={user}
+      />
+      
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        user={user}
+      />
+      
+      <HelpModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
       />
     </div>
   );

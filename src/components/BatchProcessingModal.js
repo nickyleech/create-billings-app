@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { X, Upload, Download, FileText, Trash2, Copy, Check, Loader } from 'lucide-react';
+import { X, Download, FileText, Trash2, Copy, Check, Loader, FileSpreadsheet, Plus } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import mammoth from 'mammoth';
 
 const BatchProcessingModal = ({ isOpen, onClose, customLimits, activePreset, onGenerate }) => {
   const [copyItems, setCopyItems] = useState([{ id: 1, title: '', content: '', versions: {} }]);
@@ -24,19 +26,92 @@ const BatchProcessingModal = ({ isOpen, onClose, customLimits, activePreset, onG
     ));
   };
 
-  const importFromText = () => {
-    const text = prompt('Paste your copy items (one per line):');
-    if (!text) return;
+  const handleFileImport = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    const lines = text.split('\n').filter(line => line.trim());
-    const newItems = lines.map((line, index) => ({
-      id: Date.now() + index,
-      title: `Item ${index + 1}`,
-      content: line.trim(),
-      versions: {}
-    }));
+    const fileExtension = file.name.split('.').pop().toLowerCase();
 
-    setCopyItems(newItems);
+    if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+      importFromExcel(file);
+    } else if (fileExtension === 'docx') {
+      importFromWord(file);
+    } else {
+      alert('Please select an Excel file (.xlsx, .xls) or Word document (.docx)');
+    }
+
+    // Reset file input
+    event.target.value = '';
+  };
+
+  const importFromExcel = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        // Process Excel data - assume first column is title, second is content
+        const newItems = jsonData
+          .filter(row => row.length > 0 && row[0]) // Filter out empty rows
+          .map((row, index) => ({
+            id: Date.now() + index,
+            title: row[0]?.toString().trim() || `Item ${index + 1}`,
+            content: row[1]?.toString().trim() || row[0]?.toString().trim() || '',
+            versions: {}
+          }))
+          .filter(item => item.content); // Only include items with content
+
+        if (newItems.length > 0) {
+          setCopyItems(newItems);
+          alert(`Successfully imported ${newItems.length} items from Excel file`);
+        } else {
+          alert('No valid content found in Excel file. Make sure your data is in the first two columns.');
+        }
+      } catch (error) {
+        console.error('Error importing Excel file:', error);
+        alert('Error reading Excel file. Please check the file format and try again.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const importFromWord = (file) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const arrayBuffer = e.target.result;
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        
+        // Extract text content and split by paragraphs
+        const textContent = result.value
+          .replace(/<[^>]*>/g, '\n') // Replace HTML tags with newlines
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0); // Remove empty lines
+
+        const newItems = textContent.map((content, index) => ({
+          id: Date.now() + index,
+          title: `Item ${index + 1}`,
+          content: content,
+          versions: {}
+        }));
+
+        if (newItems.length > 0) {
+          setCopyItems(newItems);
+          alert(`Successfully imported ${newItems.length} items from Word document`);
+        } else {
+          alert('No content found in Word document.');
+        }
+      } catch (error) {
+        console.error('Error importing Word file:', error);
+        alert('Error reading Word document. Please check the file format and try again.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   const processAllItems = async () => {
@@ -171,16 +246,29 @@ const BatchProcessingModal = ({ isOpen, onClose, customLimits, activePreset, onG
                 onClick={addCopyItem}
                 className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
               >
-                <FileText className="w-4 h-4" />
+                <Plus className="w-4 h-4" />
                 <span>Add Item</span>
               </button>
-              <button
-                onClick={importFromText}
-                className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Import Text</span>
-              </button>
+              <label className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 cursor-pointer">
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Import Excel</span>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileImport}
+                  className="hidden"
+                />
+              </label>
+              <label className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 cursor-pointer">
+                <FileText className="w-4 h-4" />
+                <span>Import Word</span>
+                <input
+                  type="file"
+                  accept=".docx"
+                  onChange={handleFileImport}
+                  className="hidden"
+                />
+              </label>
             </div>
             
             <div className="flex space-x-3">

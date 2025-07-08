@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthProvider';
-import { Eye, EyeOff, User, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 
 const RegisterForm = ({ onToggleMode, onSuccess }) => {
   const [formData, setFormData] = useState({
