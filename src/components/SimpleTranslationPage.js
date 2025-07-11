@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Download, FileText, Languages, Loader, CheckCircle, AlertCircle, Home, Upload, Edit3 } from 'lucide-react';
+import { Download, FileText, Languages, Loader, CheckCircle, AlertCircle, ArrowLeft, Upload, Edit3 } from 'lucide-react';
 import { parseDocument, reconstructDocument } from '../utils/parseDocument';
 import { identifyMultiLanguageSegments } from '../utils/languageDetection';
 import { generateStyleAwarePrompt } from '../utils/styleGuide';
@@ -210,8 +210,8 @@ const SimpleTranslationPage = ({ user, generateContent, onNavigateBack }) => {
                 onClick={onNavigateBack}
                 className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
               >
-                <Home className="w-4 h-4" />
-                <span>🏠 Home</span>
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
               </button>
               <div className="h-6 w-px bg-gray-300"></div>
               <div className="flex items-center space-x-2">

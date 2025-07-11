@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Upload, X, Download, BarChart3, FileText, AlertCircle, TrendingUp, Award, Target, Star } from 'lucide-react';
+import { Upload, X, Download, BarChart3, FileText, AlertCircle, TrendingUp, Award, Target, Star, Table, Info } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { compareContent, compareThreeContent, generateContentReport } from '../utils/content-analyzer';
 
-const ExcelAnalysisModal = ({ isOpen, onClose }) => {
+const ExcelAnalysisPage = ({ onNavigateBack }) => {
   const [file, setFile] = useState(null);
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
@@ -16,6 +16,10 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
   const [compareMode, setCompareMode] = useState('two'); // 'two' or 'three'
   const [analysisResults, setAnalysisResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [inputMode, setInputMode] = useState('upload'); // 'upload' or 'paste'
+  const [pasteTableData, setPasteTableData] = useState([
+    { identifier: '', version1: '', version2: '', version3: '' }
+  ]);
 
   // Helper function to get quality grade
   const getQualityGrade = (enhancedScore) => {
@@ -50,6 +54,54 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
   };
 
   const [overallReport, setOverallReport] = useState(null);
+
+  const addPasteRow = () => {
+    setPasteTableData(prev => [...prev, { identifier: '', version1: '', version2: '', version3: '' }]);
+  };
+
+  const removePasteRow = (index) => {
+    if (pasteTableData.length > 1) {
+      setPasteTableData(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const updatePasteRow = (index, field, value) => {
+    setPasteTableData(prev => {
+      const newData = [...prev];
+      newData[index] = { ...newData[index], [field]: value };
+      return newData;
+    });
+  };
+
+  const processPasteData = () => {
+    // Convert paste table data to the same format as Excel data
+    const processedData = pasteTableData.filter(row => 
+      row.version1.trim() && row.version2.trim() && 
+      (compareMode === 'two' || row.version3.trim())
+    );
+    
+    if (processedData.length === 0) {
+      alert('Please fill in at least one complete row of data');
+      return;
+    }
+    
+    setData(processedData);
+    
+    // Set up columns for paste mode
+    const pasteColumns = ['identifier', 'version1', 'version2'];
+    if (compareMode === 'three') {
+      pasteColumns.push('version3');
+    }
+    setColumns(pasteColumns);
+    
+    // Set up column mapping for paste mode
+    setColumnMapping({
+      version1: 'version1',
+      version2: 'version2',
+      version3: compareMode === 'three' ? 'version3' : '',
+      identifier: 'identifier'
+    });
+  };
 
   const performAnalysis = () => {
     if (!data.length || !columnMapping.version1 || !columnMapping.version2) {
@@ -230,54 +282,144 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Excel Content Analysis</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X size={24} />
-          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Upload Section */}
+          {/* Input Section */}
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="mx-auto mb-4 text-gray-400" size={48} />
-              <p className="text-gray-600 mb-4">Upload Excel file with {compareMode === 'two' ? 'two' : 'three'} content columns to compare</p>
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="excel-upload"
-              />
-              <label
-                htmlFor="excel-upload"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block"
-              >
-                Choose File
-              </label>
+            {/* Input Mode Toggle */}
+            <div className="flex space-x-4 p-1 bg-gray-100 rounded-lg">
               <button
-                onClick={downloadTemplate}
-                className="ml-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                onClick={() => setInputMode('upload')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                  inputMode === 'upload' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
               >
-                <Download size={16} className="inline mr-2" />
-                Download Template
+                <Upload size={16} />
+                <span>Upload File</span>
+              </button>
+              <button
+                onClick={() => setInputMode('paste')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                  inputMode === 'paste' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Table size={16} />
+                <span>Paste Table</span>
               </button>
             </div>
 
-            {file && (
+            {inputMode === 'upload' ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <Upload className="mx-auto mb-4 text-gray-400" size={48} />
+                <p className="text-gray-600 mb-4">Upload Excel file with {compareMode === 'two' ? 'two' : 'three'} content columns to compare</p>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="excel-upload"
+                />
+                <label
+                  htmlFor="excel-upload"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer inline-block"
+                >
+                  Choose File
+                </label>
+                <button
+                  onClick={downloadTemplate}
+                  className="ml-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                >
+                  <Download size={16} className="inline mr-2" />
+                  Download Template
+                </button>
+              </div>
+            ) : (
+              <div className="border border-gray-300 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Paste Content Table</h3>
+                  <button
+                    onClick={addPasteRow}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Add Row
+                  </button>
+                </div>
+                
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {pasteTableData.map((row, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-gray-50 rounded border">
+                      <div className="col-span-2">
+                        <input
+                          type="text"
+                          placeholder="ID"
+                          value={row.identifier}
+                          onChange={(e) => updatePasteRow(index, 'identifier', e.target.value)}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                        />
+                      </div>
+                      <div className={compareMode === 'three' ? 'col-span-3' : 'col-span-4'}>
+                        <textarea
+                          placeholder="Version 1"
+                          value={row.version1}
+                          onChange={(e) => updatePasteRow(index, 'version1', e.target.value)}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm h-16 resize-none"
+                        />
+                      </div>
+                      <div className={compareMode === 'three' ? 'col-span-3' : 'col-span-4'}>
+                        <textarea
+                          placeholder="Version 2"
+                          value={row.version2}
+                          onChange={(e) => updatePasteRow(index, 'version2', e.target.value)}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm h-16 resize-none"
+                        />
+                      </div>
+                      {compareMode === 'three' && (
+                        <div className="col-span-3">
+                          <textarea
+                            placeholder="Version 3"
+                            value={row.version3}
+                            onChange={(e) => updatePasteRow(index, 'version3', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm h-16 resize-none"
+                          />
+                        </div>
+                      )}
+                      <div className="col-span-1 flex items-center">
+                        <button
+                          onClick={() => removePasteRow(index)}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                          disabled={pasteTableData.length === 1}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <button
+                  onClick={processPasteData}
+                  className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Process Paste Data
+                </button>
+              </div>
+            )}
+
+            {((inputMode === 'upload' && file) || (inputMode === 'paste' && data.length > 0)) && (
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">
                   <FileText className="inline mr-2" size={16} />
-                  {file.name} ({data.length} rows)
+                  {inputMode === 'upload' ? `${file.name} (${data.length} rows)` : `Paste data (${data.length} rows)`}
                 </p>
               </div>
             )}
@@ -295,6 +437,9 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                     onChange={(e) => {
                       setCompareMode(e.target.value);
                       setColumnMapping({...columnMapping, version3: ''});
+                      // Reset paste table data when switching modes
+                      setPasteTableData([{ identifier: '', version1: '', version2: '', version3: '' }]);
+                      setData([]);
                     }}
                     className="mr-2"
                   />
@@ -306,7 +451,12 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                     name="compareMode"
                     value="three"
                     checked={compareMode === 'three'}
-                    onChange={(e) => setCompareMode(e.target.value)}
+                    onChange={(e) => {
+                      setCompareMode(e.target.value);
+                      // Reset paste table data when switching modes
+                      setPasteTableData([{ identifier: '', version1: '', version2: '', version3: '' }]);
+                      setData([]);
+                    }}
                     className="mr-2"
                   />
                   Three Columns
@@ -314,8 +464,8 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            {/* Column Mapping */}
-            {columns.length > 0 && (
+            {/* Column Mapping - only show for upload mode */}
+            {inputMode === 'upload' && columns.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Map Your Columns</h3>
                 <div className="grid grid-cols-1 gap-4">
@@ -392,10 +542,57 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                 </button>
               </div>
             )}
+            
+            {/* Analyze button for paste mode */}
+            {inputMode === 'paste' && data.length > 0 && (
+              <button
+                onClick={performAnalysis}
+                disabled={isAnalyzing}
+                className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-4 py-2 rounded"
+              >
+                {isAnalyzing ? 'Analyzing...' : 'Analyze Content'}
+                <BarChart3 className="inline ml-2" size={16} />
+              </button>
+            )}
           </div>
 
           {/* Results Section */}
           <div className="space-y-4">
+            {/* Overview Section */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <div className="flex items-start space-x-3">
+                <Info className="text-blue-600 mt-1" size={20} />
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-900 mb-2">What is Excel Content Analysis?</h3>
+                  <p className="text-blue-800 mb-3">
+                    This tool compares different versions of content to determine which performs better using professional quality metrics from British television metadata standards.
+                  </p>
+                  <div className="space-y-3 text-sm text-blue-700">
+                    <div>
+                      <h4 className="font-medium mb-2">What gets analysed:</h4>
+                      <ul className="space-y-1">
+                        <li>• <strong>Length & Word Count:</strong> Optimal character and word usage</li>
+                        <li>• <strong>Readability:</strong> How easily the content can be understood</li>
+                        <li>• <strong>Style Compliance:</strong> Adherence to PA TV style guide</li>
+                        <li>• <strong>Professional Tone:</strong> Appropriate tone for broadcast metadata</li>
+                        <li>• <strong>Content Quality:</strong> Overall effectiveness and completeness</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">How it works:</h4>
+                      <ul className="space-y-1">
+                        <li>• Upload Excel files or paste content directly into the table</li>
+                        <li>• Choose between 2 or 3 column comparison modes</li>
+                        <li>• Each version gets scored on multiple quality metrics</li>
+                        <li>• Results show which version performs best and why</li>
+                        <li>• Export detailed reports for further analysis</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             {analysisResults && (
               <>
                 <div className="flex justify-between items-center">
@@ -720,4 +917,4 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
   );
 };
 
-export default ExcelAnalysisModal;
+export default ExcelAnalysisPage;

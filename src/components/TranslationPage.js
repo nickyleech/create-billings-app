@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Download, FileText, Languages, Loader, CheckCircle, AlertCircle, Home } from 'lucide-react';
+import { Upload, Download, FileText, Languages, Loader, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { parseDocument, reconstructDocument } from '../utils/parseDocument';
 import { identifyMultiLanguageSegments, detectLanguage, getConfidenceColor, getConfidenceDescription } from '../utils/languageDetection';
@@ -235,8 +235,8 @@ const TranslationPage = ({ user, generateContent, onNavigateBack }) => {
                 onClick={onNavigateBack}
                 className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
               >
-                <Home className="w-4 h-4" />
-                <span>🏠 Home</span>
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
               </button>
               <div className="h-6 w-px bg-gray-300"></div>
               <div className="flex items-center space-x-2">
@@ -653,8 +653,8 @@ const TranslationPage = ({ user, generateContent, onNavigateBack }) => {
               onClick={onNavigateBack}
               className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
             >
-              <Home className="w-4 h-4" />
-              <span>🏠 Home</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
             </button>
           </div>
         </div>
