@@ -139,40 +139,19 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
 
   const downloadTemplate = () => {
     try {
-      // Create template data with Welsh content examples
+      // Create simplified template data with only Programme ID and Description Welsh
       const templateData = [
         {
           'Programme ID': 'PROG_001',
-          'Programme Title Welsh': 'Newyddion Cymru',
-          'Programme Title English': 'Wales Today',
-          'Description Welsh': 'Rhaglen newyddion ddyddiol sy\'n cyflwyno\'r digwyddiadau diweddaraf o Gymru a\'r byd.',
-          'Description English': 'Daily news programme presenting the latest events from Wales and the world.',
-          'Channel': 'BBC One Wales',
-          'Time': '18:30',
-          'Duration': '30 mins',
-          'Notes': 'Bilingual programme with Welsh and English versions'
+          'Description Welsh': 'Rhaglen newyddion ddyddiol sy\'n cyflwyno\'r digwyddiadau diweddaraf o Gymru a\'r byd.'
         },
         {
           'Programme ID': 'PROG_002',
-          'Programme Title Welsh': 'Cefn Gwlad',
-          'Programme Title English': 'Countryside',
-          'Description Welsh': 'Rhaglen am fywyd cefn gwlad Cymru, yn cynnwys ffermio, natur, a thraddodiadau lleol.',
-          'Description English': 'Programme about rural life in Wales, including farming, nature, and local traditions.',
-          'Channel': 'S4C',
-          'Time': '19:00',
-          'Duration': '60 mins',
-          'Notes': 'Weekly countryside programme'
+          'Description Welsh': 'Rhaglen am fywyd cefn gwlad Cymru, yn cynnwys ffermio, natur, a thraddodiadau lleol.'
         },
         {
           'Programme ID': 'PROG_003',
-          'Programme Title Welsh': 'Pobol y Cwm',
-          'Programme Title English': 'People of the Valley',
-          'Description Welsh': 'Opera sebon Gymraeg am fywyd pobl mewn pentref dychmygol yng Nghymru.',
-          'Description English': 'Welsh soap opera about the lives of people in an imaginary Welsh village.',
-          'Channel': 'S4C',
-          'Time': '20:00',
-          'Duration': '25 mins',
-          'Notes': 'Long-running Welsh soap opera'
+          'Description Welsh': 'Opera sebon Gymraeg am fywyd pobl mewn pentref dychmygol yng Nghymru.'
         }
       ];
 
@@ -186,15 +165,8 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
       
       // Set column widths for better readability
       const columnWidths = [
-        { wch: 12 }, // Programme ID
-        { wch: 25 }, // Programme Title Welsh
-        { wch: 25 }, // Programme Title English
-        { wch: 50 }, // Description Welsh
-        { wch: 50 }, // Description English
-        { wch: 15 }, // Channel
-        { wch: 8 },  // Time
-        { wch: 12 }, // Duration
-        { wch: 30 }  // Notes
+        { wch: 15 }, // Programme ID
+        { wch: 80 }  // Description Welsh
       ];
       worksheet['!cols'] = columnWidths;
 
