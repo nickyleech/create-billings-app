@@ -110,88 +110,124 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
   };
 
   const downloadTemplate = () => {
-    const templateData = compareMode === 'three' ? [
-      {
-        'Item ID': 'ITEM_001',
-        'Version 1': 'This is the first version of content that needs to be analyzed for quality metrics.',
-        'Version 2': 'This is the second version of content that will be compared against the first version.',
-        'Version 3': 'This is the third version of content for comprehensive three-way comparison.',
-        'Notes': 'Optional notes about the content'
-      },
-      {
-        'Item ID': 'ITEM_002',
-        'Version 1': 'Another example of content that could be shorter and more concise.',
-        'Version 2': 'Shorter, more concise content example.',
-        'Version 3': 'Even more concise version for comparison.',
-        'Notes': 'Example showing length optimization across three versions'
-      }
-    ] : [
-      {
-        'Item ID': 'ITEM_001',
-        'Version 1': 'This is the first version of content that needs to be analyzed for quality metrics.',
-        'Version 2': 'This is the second version of content that will be compared against the first version.',
-        'Notes': 'Optional notes about the content'
-      },
-      {
-        'Item ID': 'ITEM_002',
-        'Version 1': 'Another example of content that could be shorter and more concise.',
-        'Version 2': 'Shorter, more concise content example.',
-        'Notes': 'Example showing length optimization'
-      }
-    ];
+    try {
+      const templateData = compareMode === 'three' ? [
+        {
+          'Item ID': 'ITEM_001',
+          'Version 1': 'This is the first version of content that needs to be analyzed for quality metrics.',
+          'Version 2': 'This is the second version of content that will be compared against the first version.',
+          'Version 3': 'This is the third version of content for comprehensive three-way comparison.',
+          'Notes': 'Optional notes about the content'
+        },
+        {
+          'Item ID': 'ITEM_002',
+          'Version 1': 'Another example of content that could be shorter and more concise.',
+          'Version 2': 'Shorter, more concise content example.',
+          'Version 3': 'Even more concise version for comparison.',
+          'Notes': 'Example showing length optimization across three versions'
+        }
+      ] : [
+        {
+          'Item ID': 'ITEM_001',
+          'Version 1': 'This is the first version of content that needs to be analyzed for quality metrics.',
+          'Version 2': 'This is the second version of content that will be compared against the first version.',
+          'Notes': 'Optional notes about the content'
+        },
+        {
+          'Item ID': 'ITEM_002',
+          'Version 1': 'Another example of content that could be shorter and more concise.',
+          'Version 2': 'Shorter, more concise content example.',
+          'Notes': 'Example showing length optimization'
+        }
+      ];
 
-    const worksheet = XLSX.utils.json_to_sheet(templateData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
-    XLSX.writeFile(workbook, `content-analysis-template-${compareMode}-column.xlsx`);
+      // Check if XLSX is available
+      if (!XLSX || !XLSX.utils) {
+        throw new Error('XLSX library not loaded properly');
+      }
+
+      console.log('Creating worksheet with data:', templateData);
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      
+      console.log('Creating workbook...');
+      const workbook = XLSX.utils.book_new();
+      
+      console.log('Adding worksheet to workbook...');
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
+      
+      const filename = `content-analysis-template-${compareMode}-column.xlsx`;
+      console.log('Writing file:', filename);
+      
+      XLSX.writeFile(workbook, filename);
+      console.log('Template download completed successfully');
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      alert(`Error downloading template: ${error.message}`);
+    }
   };
 
   const exportResults = () => {
     if (!analysisResults) return;
 
-    const exportData = analysisResults.map(result => {
-      const baseData = {
-        'Identifier': result.identifier,
-        'Version 1': result.version1,
-        'Version 2': result.version2,
-        'V1 Length': result.analysis1.length,
-        'V2 Length': result.analysis2.length,
-        'V1 Word Count': result.analysis1.wordCount,
-        'V2 Word Count': result.analysis2.wordCount,
-        'V1 Readability': result.analysis1.readabilityScore,
-        'V2 Readability': result.analysis2.readabilityScore,
-        'V1 Quality Score': result.analysis1.qualityScore,
-        'V2 Quality Score': result.analysis2.qualityScore,
-        'V1 Enhanced Score': result.analysis1.enhancedQualityScore,
-        'V2 Enhanced Score': result.analysis2.enhancedQualityScore,
-        'Winner': result.winner,
-        'V1 Issues': result.analysis1.issues.join('; '),
-        'V2 Issues': result.analysis2.issues.join('; '),
-        'V1 Strengths': result.analysis1.strengths.join('; '),
-        'V2 Strengths': result.analysis2.strengths.join('; ')
-      };
-
-      if (compareMode === 'three' && result.analysis3) {
-        return {
-          ...baseData,
-          'Version 3': result.version3,
-          'V3 Length': result.analysis3.length,
-          'V3 Word Count': result.analysis3.wordCount,
-          'V3 Readability': result.analysis3.readabilityScore,
-          'V3 Quality Score': result.analysis3.qualityScore,
-          'V3 Enhanced Score': result.analysis3.enhancedQualityScore,
-          'V3 Issues': result.analysis3.issues.join('; '),
-          'V3 Strengths': result.analysis3.strengths.join('; ')
+    try {
+      const exportData = analysisResults.map(result => {
+        const baseData = {
+          'Identifier': result.identifier,
+          'Version 1': result.version1,
+          'Version 2': result.version2,
+          'V1 Length': result.analysis1.length,
+          'V2 Length': result.analysis2.length,
+          'V1 Word Count': result.analysis1.wordCount,
+          'V2 Word Count': result.analysis2.wordCount,
+          'V1 Readability': result.analysis1.readabilityScore,
+          'V2 Readability': result.analysis2.readabilityScore,
+          'V1 Quality Score': result.analysis1.qualityScore,
+          'V2 Quality Score': result.analysis2.qualityScore,
+          'V1 Enhanced Score': result.analysis1.enhancedQualityScore,
+          'V2 Enhanced Score': result.analysis2.enhancedQualityScore,
+          'Winner': result.winner,
+          'V1 Issues': result.analysis1.issues.join('; '),
+          'V2 Issues': result.analysis2.issues.join('; '),
+          'V1 Strengths': result.analysis1.strengths.join('; '),
+          'V2 Strengths': result.analysis2.strengths.join('; ')
         };
+
+        if (compareMode === 'three' && result.analysis3) {
+          return {
+            ...baseData,
+            'Version 3': result.version3,
+            'V3 Length': result.analysis3.length,
+            'V3 Word Count': result.analysis3.wordCount,
+            'V3 Readability': result.analysis3.readabilityScore,
+            'V3 Quality Score': result.analysis3.qualityScore,
+            'V3 Enhanced Score': result.analysis3.enhancedQualityScore,
+            'V3 Issues': result.analysis3.issues.join('; '),
+            'V3 Strengths': result.analysis3.strengths.join('; ')
+          };
+        }
+
+        return baseData;
+      });
+
+      // Check if XLSX is available
+      if (!XLSX || !XLSX.utils) {
+        throw new Error('XLSX library not loaded properly');
       }
 
-      return baseData;
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Analysis Results');
-    XLSX.writeFile(workbook, `content-analysis-results-${compareMode}-column-${new Date().toISOString().split('T')[0]}.xlsx`);
+      console.log('Creating export worksheet...');
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Analysis Results');
+      
+      const filename = `content-analysis-results-${compareMode}-column-${new Date().toISOString().split('T')[0]}.xlsx`;
+      console.log('Exporting results to:', filename);
+      
+      XLSX.writeFile(workbook, filename);
+      console.log('Export completed successfully');
+    } catch (error) {
+      console.error('Error exporting results:', error);
+      alert(`Error exporting results: ${error.message}`);
+    }
   };
 
   if (!isOpen) return null;
