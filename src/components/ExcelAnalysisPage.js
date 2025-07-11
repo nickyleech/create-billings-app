@@ -16,7 +16,7 @@ const ExcelAnalysisPage = ({ onNavigateBack }) => {
   const [compareMode, setCompareMode] = useState('two'); // 'two' or 'three'
   const [analysisResults, setAnalysisResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [inputMode, setInputMode] = useState('upload'); // 'upload' or 'paste'
+  const [inputMode, setInputMode] = useState('paste'); // 'upload' or 'paste'
   const [pasteTableData, setPasteTableData] = useState([
     { identifier: '', version1: '', version2: '', version3: '' }
   ]);
@@ -295,17 +295,6 @@ const ExcelAnalysisPage = ({ onNavigateBack }) => {
             {/* Input Mode Toggle */}
             <div className="flex space-x-4 p-1 bg-gray-100 rounded-lg">
               <button
-                onClick={() => setInputMode('upload')}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-                  inputMode === 'upload' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                <Upload size={16} />
-                <span>Upload File</span>
-              </button>
-              <button
                 onClick={() => setInputMode('paste')}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
                   inputMode === 'paste' 
@@ -315,6 +304,17 @@ const ExcelAnalysisPage = ({ onNavigateBack }) => {
               >
                 <Table size={16} />
                 <span>Paste Table</span>
+              </button>
+              <button
+                onClick={() => setInputMode('upload')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                  inputMode === 'upload' 
+                    ? 'bg-white text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Upload size={16} />
+                <span>Upload File</span>
               </button>
             </div>
 
