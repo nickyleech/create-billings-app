@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, Upload, Download, FileText, Languages, Loader } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { parseDocument, identifyWelshSegments, generateTranslationPrompt, reconstructDocument } from '../utils/parseDocument';
 
 const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
@@ -136,6 +137,81 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
     }
   };
 
+  const downloadTemplate = () => {
+    try {
+      // Create template data with Welsh content examples
+      const templateData = [
+        {
+          'Programme ID': 'PROG_001',
+          'Programme Title Welsh': 'Newyddion Cymru',
+          'Programme Title English': 'Wales Today',
+          'Description Welsh': 'Rhaglen newyddion ddyddiol sy\'n cyflwyno\'r digwyddiadau diweddaraf o Gymru a\'r byd.',
+          'Description English': 'Daily news programme presenting the latest events from Wales and the world.',
+          'Channel': 'BBC One Wales',
+          'Time': '18:30',
+          'Duration': '30 mins',
+          'Notes': 'Bilingual programme with Welsh and English versions'
+        },
+        {
+          'Programme ID': 'PROG_002',
+          'Programme Title Welsh': 'Cefn Gwlad',
+          'Programme Title English': 'Countryside',
+          'Description Welsh': 'Rhaglen am fywyd cefn gwlad Cymru, yn cynnwys ffermio, natur, a thraddodiadau lleol.',
+          'Description English': 'Programme about rural life in Wales, including farming, nature, and local traditions.',
+          'Channel': 'S4C',
+          'Time': '19:00',
+          'Duration': '60 mins',
+          'Notes': 'Weekly countryside programme'
+        },
+        {
+          'Programme ID': 'PROG_003',
+          'Programme Title Welsh': 'Pobol y Cwm',
+          'Programme Title English': 'People of the Valley',
+          'Description Welsh': 'Opera sebon Gymraeg am fywyd pobl mewn pentref dychmygol yng Nghymru.',
+          'Description English': 'Welsh soap opera about the lives of people in an imaginary Welsh village.',
+          'Channel': 'S4C',
+          'Time': '20:00',
+          'Duration': '25 mins',
+          'Notes': 'Long-running Welsh soap opera'
+        }
+      ];
+
+      // Check if XLSX is available
+      if (!XLSX || !XLSX.utils) {
+        throw new Error('XLSX library not loaded properly');
+      }
+
+      console.log('Creating Welsh translation template...');
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      
+      // Set column widths for better readability
+      const columnWidths = [
+        { wch: 12 }, // Programme ID
+        { wch: 25 }, // Programme Title Welsh
+        { wch: 25 }, // Programme Title English
+        { wch: 50 }, // Description Welsh
+        { wch: 50 }, // Description English
+        { wch: 15 }, // Channel
+        { wch: 8 },  // Time
+        { wch: 12 }, // Duration
+        { wch: 30 }  // Notes
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Welsh Translation Template');
+      
+      const filename = 'welsh-translation-template.xlsx';
+      console.log('Downloading Welsh translation template:', filename);
+      
+      XLSX.writeFile(workbook, filename);
+      console.log('Welsh translation template download completed successfully');
+    } catch (error) {
+      console.error('Error downloading Welsh translation template:', error);
+      alert(`Error downloading template: ${error.message}`);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
@@ -190,13 +266,12 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                       >
                         Choose File
                       </button>
-                      <a
-                        href="/welsh-translation-template.xlsx"
-                        download="Excel Welsh Template.xlsx"
+                      <button
+                        onClick={downloadTemplate}
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
                       >
                         Download Template
-                      </a>
+                      </button>
                     </div>
                   </div>
                 ) : (
