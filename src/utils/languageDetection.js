@@ -206,7 +206,7 @@ export const analyzeLanguageDistribution = (text) => {
   };
 };
 
-export default {
+const languageDetection = {
   detectLanguage,
   detectLanguageBatch,
   detectLanguageSegments,
@@ -216,3 +216,5 @@ export default {
   identifyMultiLanguageSegments,
   analyzeLanguageDistribution
 };
+
+export default languageDetection;

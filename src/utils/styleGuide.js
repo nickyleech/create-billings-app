@@ -288,7 +288,7 @@ export const getAllStyleGuides = () => {
     .map(([code, guide]) => ({ code, ...guide }));
 };
 
-export default {
+const styleGuide = {
   generateStyleAwarePrompt,
   validateTranslation,
   getStyleGuideRecommendations,
@@ -296,3 +296,5 @@ export default {
   applyStyleGuideTransformations,
   getAllStyleGuides
 };
+
+export default styleGuide;

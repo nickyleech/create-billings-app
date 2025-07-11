@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle, BarChart3, Languages } from 'lucide-react';
+import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle, BarChart3, Languages, FileText } from 'lucide-react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginForm from './components/LoginForm';
 import CustomLimitsModal from './components/CustomLimitsModal';

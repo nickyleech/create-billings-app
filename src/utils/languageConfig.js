@@ -294,7 +294,7 @@ export const getAllStyleGuides = () => {
     .map(([code, guide]) => ({ code, ...guide }));
 };
 
-export default {
+const languageConfig = {
   LANGUAGES,
   POPULAR_LANGUAGE_PAIRS,
   LANGUAGE_PATTERNS,
@@ -307,3 +307,5 @@ export default {
   getStyleGuideByCode,
   getAllStyleGuides
 };
+
+export default languageConfig;
