@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Info, Code, Lightbulb, Target, AlertCircle } from 'lucide-react';
-import { generateStyleInstructions, generatePromptPreview, getStyleRuleExplanations } from '../utils/style-instructions';
+import { generateStyleInstructions, generatePromptPreview } from '../utils/style-instructions';
 
 const StyleInstructionsPreview = ({ styleRules, forbiddenWords = [], customLimits = [], className = '' }) => {
   const [showPrompt, setShowPrompt] = useState(false);

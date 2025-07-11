@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle, BarChart3 } from 'lucide-react';
+import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle, BarChart3, Languages } from 'lucide-react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginForm from './components/LoginForm';
 import CustomLimitsModal from './components/CustomLimitsModal';
@@ -10,6 +10,7 @@ import HistoryModal from './components/HistoryModal';
 import SettingsModal from './components/SettingsModal';
 import HelpModal from './components/HelpModal';
 import ExcelAnalysisModal from './components/ExcelAnalysisModal';
+import TranslationModal from './components/TranslationModal';
 import ActiveStylePreview from './components/ActiveStylePreview';
 import { generateContent } from './utils/api';
 
@@ -52,6 +53,7 @@ const MainApp = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [showTranslationModal, setShowTranslationModal] = useState(false);
   const [activePreset, setActivePreset] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState('default');
   const [hasCustomPresets, setHasCustomPresets] = useState(false);
@@ -135,7 +137,7 @@ const MainApp = () => {
     try {
       // Create dynamic prompts based on custom limits
       const limitsText = customLimits.map((limit, index) => 
-        `- ${limit.label}: MUST NOT exceed ${limit.value} ${limit.type} including spaces and punctuation`
+        `- ${limit.label}: ABSOLUTE MAXIMUM ${limit.value} ${limit.type} including spaces and punctuation - NEVER EXCEED THIS LIMIT`
       ).join('\n');
 
       const resultFormat = customLimits.reduce((acc, limit, index) => {
@@ -199,7 +201,7 @@ ${limitsText}
 
 For word limits, count individual words separated by spaces.
 For character limits, count all characters including spaces and punctuation.
-CRITICAL: Each version must be exactly under the specified character/word limit. Never exceed the limits.
+ABSOLUTELY CRITICAL: Each version must be STRICTLY under the specified character/word limit. COUNT EVERY CHARACTER INCLUDING SPACES AND PUNCTUATION. If a version would exceed the limit by even 1 character, make it shorter. NEVER EXCEED THE LIMITS UNDER ANY CIRCUMSTANCES.
 If there is insufficient original content to meaningfully fill a longer version, leave it blank.
 
 Respond with a JSON object in this exact format:
@@ -208,7 +210,13 @@ ${JSON.stringify(resultFormat, null, 2)}
 Your entire response must be valid JSON only. Do not include any other text or formatting.`;
 
       const response = await generateContent(prompt, user.id);
-      const parsedResponse = JSON.parse(response);
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(response);
+      } catch (error) {
+        console.error('Failed to parse API response:', error);
+        throw new Error('Invalid response format from API');
+      }
       
       // Map the response to our version keys and validate limits
       const newVersions = {};
@@ -218,10 +226,22 @@ Your entire response must be valid JSON only. Do not include any other text or f
         const key = `version${index + 1}`;
         let content = parsedResponse[key] || '';
         
-        // Validate and truncate if necessary
+        // Validate and truncate if necessary with smart word boundary preservation
         if (content && limit.type === 'characters' && content.length > parseInt(limit.value)) {
           console.warn(`${limit.label} exceeded limit (${content.length}/${limit.value}), truncating...`);
-          content = content.substring(0, parseInt(limit.value));
+          // Smart truncation: try to preserve word boundaries
+          const maxLength = parseInt(limit.value);
+          if (content.length > maxLength) {
+            let truncated = content.substring(0, maxLength);
+            // If we cut in the middle of a word, back up to the last complete word
+            if (content[maxLength] && content[maxLength] !== ' ') {
+              const lastSpaceIndex = truncated.lastIndexOf(' ');
+              if (lastSpaceIndex > maxLength * 0.8) { // Only if we don't lose too much content
+                truncated = truncated.substring(0, lastSpaceIndex);
+              }
+            }
+            content = truncated.trim();
+          }
         } else if (content && limit.type === 'words') {
           const words = content.trim().split(/\s+/).filter(word => word.length > 0);
           if (words.length > parseInt(limit.value)) {
@@ -383,7 +403,7 @@ Your entire response must be valid JSON only. Do not include any other text or f
     }
 
     const limitsText = limitsToUse.map((limit, index) => 
-      `- ${limit.label}: MUST NOT exceed ${limit.value} ${limit.type} including spaces and punctuation`
+      `- ${limit.label}: ABSOLUTE MAXIMUM ${limit.value} ${limit.type} including spaces and punctuation - NEVER EXCEED THIS LIMIT`
     ).join('\n');
 
     const resultFormat = limitsToUse.reduce((acc, limit, index) => {
@@ -405,7 +425,7 @@ ${limitsText}
 
 For word limits, count individual words separated by spaces.
 For character limits, count all characters including spaces and punctuation.
-CRITICAL: Each version must be exactly under the specified character/word limit. Never exceed the limits.
+ABSOLUTELY CRITICAL: Each version must be STRICTLY under the specified character/word limit. COUNT EVERY CHARACTER INCLUDING SPACES AND PUNCTUATION. If a version would exceed the limit by even 1 character, make it shorter. NEVER EXCEED THE LIMITS UNDER ANY CIRCUMSTANCES.
 If there is insufficient original content to meaningfully fill a longer version, leave it blank.
 
 Respond with a JSON object in this exact format:
@@ -423,10 +443,22 @@ Your entire response must be valid JSON only. Do not include any other text or f
       const key = `version${index + 1}`;
       let content = parsedResponse[key] || '';
       
-      // Validate and truncate if necessary
+      // Validate and truncate if necessary with smart word boundary preservation
       if (content && limit.type === 'characters' && content.length > parseInt(limit.value)) {
         console.warn(`${limit.label} exceeded limit (${content.length}/${limit.value}), truncating...`);
-        content = content.substring(0, parseInt(limit.value));
+        // Smart truncation: try to preserve word boundaries
+        const maxLength = parseInt(limit.value);
+        if (content.length > maxLength) {
+          let truncated = content.substring(0, maxLength);
+          // If we cut in the middle of a word, back up to the last complete word
+          if (content[maxLength] && content[maxLength] !== ' ') {
+            const lastSpaceIndex = truncated.lastIndexOf(' ');
+            if (lastSpaceIndex > maxLength * 0.8) { // Only if we don't lose too much content
+              truncated = truncated.substring(0, lastSpaceIndex);
+            }
+          }
+          content = truncated.trim();
+        }
       } else if (content && limit.type === 'words') {
         const words = content.trim().split(/\s+/).filter(word => word.length > 0);
         if (words.length > parseInt(limit.value)) {
@@ -452,6 +484,13 @@ Your entire response must be valid JSON only. Do not include any other text or f
         </div>
         
         <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setShowTranslationModal(true)}
+            className="flex items-center space-x-2 px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <Languages className="w-4 h-4" />
+            <span>Translation</span>
+          </button>
           <button
             onClick={() => setShowHelpModal(true)}
             className="flex items-center space-x-2 px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
@@ -750,6 +789,13 @@ Your entire response must be valid JSON only. Do not include any other text or f
       <HelpModal
         isOpen={showHelpModal}
         onClose={() => setShowHelpModal(false)}
+      />
+      
+      <TranslationModal
+        isOpen={showTranslationModal}
+        onClose={() => setShowTranslationModal(false)}
+        user={user}
+        generateContent={generateContent}
       />
     </div>
   );
