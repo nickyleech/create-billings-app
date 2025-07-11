@@ -17,8 +17,13 @@ const ExcelAnalysisPage = ({ onNavigateBack }) => {
   const [analysisResults, setAnalysisResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [inputMode, setInputMode] = useState('paste'); // 'upload' or 'paste'
+  // Generate unique ID using timestamp and random number
+  const generateUniqueId = () => {
+    return `row_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   const [pasteTableData, setPasteTableData] = useState([
-    { identifier: '', version1: '', version2: '', version3: '' }
+    { id: generateUniqueId(), identifier: '', version1: '', version2: '', version3: '' }
   ]);
 
   // Helper function to get quality grade
@@ -56,7 +61,7 @@ const ExcelAnalysisPage = ({ onNavigateBack }) => {
   const [overallReport, setOverallReport] = useState(null);
 
   const addPasteRow = () => {
-    setPasteTableData(prev => [...prev, { identifier: '', version1: '', version2: '', version3: '' }]);
+    setPasteTableData(prev => [...prev, { id: generateUniqueId(), identifier: '', version1: '', version2: '', version3: '' }]);
   };
 
   const removePasteRow = (index) => {
@@ -357,7 +362,7 @@ const ExcelAnalysisPage = ({ onNavigateBack }) => {
                 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {pasteTableData.map((row, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-gray-50 rounded border">
+                    <div key={row.id} className="grid grid-cols-12 gap-2 p-3 bg-gray-50 rounded border">
                       <div className="col-span-2">
                         <input
                           type="text"
@@ -438,7 +443,7 @@ const ExcelAnalysisPage = ({ onNavigateBack }) => {
                       setCompareMode(e.target.value);
                       setColumnMapping({...columnMapping, version3: ''});
                       // Reset paste table data when switching modes
-                      setPasteTableData([{ identifier: '', version1: '', version2: '', version3: '' }]);
+                      setPasteTableData([{ id: generateUniqueId(), identifier: '', version1: '', version2: '', version3: '' }]);
                       setData([]);
                     }}
                     className="mr-2"
@@ -454,7 +459,7 @@ const ExcelAnalysisPage = ({ onNavigateBack }) => {
                     onChange={(e) => {
                       setCompareMode(e.target.value);
                       // Reset paste table data when switching modes
-                      setPasteTableData([{ identifier: '', version1: '', version2: '', version3: '' }]);
+                      setPasteTableData([{ id: generateUniqueId(), identifier: '', version1: '', version2: '', version3: '' }]);
                       setData([]);
                     }}
                     className="mr-2"

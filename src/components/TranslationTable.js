@@ -7,11 +7,16 @@ const TranslationTable = ({
   isProcessing = false,
   error = '' 
 }) => {
+  // Generate unique ID using timestamp and random number
+  const generateUniqueId = () => {
+    return `row_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   const [tableData, setTableData] = useState(
     initialData.length > 0 ? initialData : [
-      { id: 'Programme 1', content: '' },
-      { id: 'Programme 2', content: '' },
-      { id: 'Programme 3', content: '' }
+      { uniqueId: generateUniqueId(), id: 'Programme 1', content: '' },
+      { uniqueId: generateUniqueId(), id: 'Programme 2', content: '' },
+      { uniqueId: generateUniqueId(), id: 'Programme 3', content: '' }
     ]
   );
   const [pasteDetected, setPasteDetected] = useState(false);
@@ -31,6 +36,7 @@ const TranslationTable = ({
 
   const addRow = () => {
     const newRow = {
+      uniqueId: generateUniqueId(),
       id: `Programme ${tableData.length + 1}`,
       content: ''
     };
@@ -46,9 +52,9 @@ const TranslationTable = ({
 
   const clearAll = () => {
     setTableData([
-      { id: 'Programme 1', content: '' },
-      { id: 'Programme 2', content: '' },
-      { id: 'Programme 3', content: '' }
+      { uniqueId: generateUniqueId(), id: 'Programme 1', content: '' },
+      { uniqueId: generateUniqueId(), id: 'Programme 2', content: '' },
+      { uniqueId: generateUniqueId(), id: 'Programme 3', content: '' }
     ]);
     setPasteDetected(false);
   };
@@ -71,12 +77,14 @@ const TranslationTable = ({
         if (columns.length >= 2) {
           // Two columns: ID and Content
           parsedData.push({
+            uniqueId: generateUniqueId(),
             id: columns[0].trim() || `Programme ${index + 1}`,
             content: columns[1].trim()
           });
         } else if (columns.length === 1 && line.trim()) {
           // Single column: treat as content with auto-generated ID
           parsedData.push({
+            uniqueId: generateUniqueId(),
             id: `Programme ${index + 1}`,
             content: line.trim()
           });
@@ -160,7 +168,7 @@ const TranslationTable = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {tableData.map((row, index) => (
-                <tr key={index} className="hover:bg-gray-50">
+                <tr key={row.uniqueId} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <input
                       type="text"
