@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, X, Download, BarChart3, FileText, AlertCircle, TrendingUp, Award, Target } from 'lucide-react';
+import { Upload, X, Download, BarChart3, FileText, AlertCircle, TrendingUp, Award, Target, PieChart, Star } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { compareContent, generateContentReport } from '../utils/content-analyzer';
 
@@ -14,6 +14,17 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
   });
   const [analysisResults, setAnalysisResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Helper function to get quality grade
+  const getQualityGrade = (enhancedScore) => {
+    const percentage = (enhancedScore / 170) * 100;
+    if (percentage >= 90) return { grade: 'Excellent', color: 'text-green-600 bg-green-100' };
+    else if (percentage >= 80) return { grade: 'Very Good', color: 'text-blue-600 bg-blue-100' };
+    else if (percentage >= 70) return { grade: 'Good', color: 'text-indigo-600 bg-indigo-100' };
+    else if (percentage >= 60) return { grade: 'Fair', color: 'text-yellow-600 bg-yellow-100' };
+    else if (percentage >= 50) return { grade: 'Poor', color: 'text-orange-600 bg-orange-100' };
+    else return { grade: 'Needs Revision', color: 'text-red-600 bg-red-100' };
+  };
 
   const handleFileUpload = (event) => {
     const uploadedFile = event.target.files[0];
@@ -110,6 +121,8 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
       'V2 Readability': result.analysis2.readabilityScore,
       'V1 Quality Score': result.analysis1.qualityScore,
       'V2 Quality Score': result.analysis2.qualityScore,
+      'V1 Enhanced Score': result.analysis1.enhancedQualityScore,
+      'V2 Enhanced Score': result.analysis2.enhancedQualityScore,
       'Winner': result.winner,
       'V1 Issues': result.analysis1.issues.join('; '),
       'V2 Issues': result.analysis2.issues.join('; '),
@@ -254,7 +267,7 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                 </div>
                 
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="grid grid-cols-3 gap-4 text-center mb-4">
                     <div>
                       <p className="text-2xl font-bold text-blue-600">
                         {analysisResults.filter(r => r.winner === 'version1').length}
@@ -272,6 +285,35 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                         {analysisResults.filter(r => r.winner === 'tie').length}
                       </p>
                       <p className="text-sm text-gray-600">Ties</p>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium mb-2 flex items-center">
+                      <Star className="mr-2 text-yellow-500" size={16} />
+                      Quality Grade Distribution
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      {(() => {
+                        const grades = { 'Excellent (90-100%)': 0, 'Very Good (80-89%)': 0, 'Good (70-79%)': 0, 'Fair (60-69%)': 0, 'Poor (50-59%)': 0, 'Needs Revision (<50%)': 0 };
+                        analysisResults.forEach(result => {
+                          [result.analysis1, result.analysis2].forEach(analysis => {
+                            const percentage = (analysis.enhancedQualityScore / 170) * 100;
+                            if (percentage >= 90) grades['Excellent (90-100%)']++;
+                            else if (percentage >= 80) grades['Very Good (80-89%)']++;
+                            else if (percentage >= 70) grades['Good (70-79%)']++;
+                            else if (percentage >= 60) grades['Fair (60-69%)']++;
+                            else if (percentage >= 50) grades['Poor (50-59%)']++;
+                            else grades['Needs Revision (<50%)']++;
+                          });
+                        });
+                        return Object.entries(grades).map(([grade, count]) => (
+                          <div key={grade} className="flex justify-between">
+                            <span className="text-gray-600">{grade}</span>
+                            <span className="font-medium">{count}</span>
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -324,11 +366,36 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                       
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="space-y-2">
-                          <p className="font-medium">Version 1 (Score: {result.analysis1.qualityScore})</p>
-                          <p className="text-gray-600 text-xs">
-                            {result.analysis1.length} chars, {result.analysis1.wordCount} words, 
-                            {result.analysis1.readabilityScore}% readable
-                          </p>
+                          <p className="font-medium">Version 1</p>
+                          <div className="text-xs space-y-1">
+                            <p className="text-gray-600">
+                              {result.analysis1.length} chars, {result.analysis1.wordCount} words, 
+                              {result.analysis1.readabilityScore}% readable
+                            </p>
+                            <div className="flex items-center space-x-2 flex-wrap">
+                              <span className="text-blue-600 font-medium">Basic: {result.analysis1.qualityScore}/100</span>
+                              <span className="text-purple-600 font-medium">Enhanced: {result.analysis1.enhancedQualityScore}/170</span>
+                              <span className={`px-2 py-1 rounded-full text-xs ${getQualityGrade(result.analysis1.enhancedQualityScore).color}`}>
+                                {getQualityGrade(result.analysis1.enhancedQualityScore).grade}
+                              </span>
+                            </div>
+                            {result.analysis1.scoreBreakdown && (
+                              <div className="bg-gray-50 p-2 rounded text-xs">
+                                <p className="font-medium mb-1">Score Breakdown:</p>
+                                <div className="grid grid-cols-2 gap-1">
+                                  <span>Length: {result.analysis1.scoreBreakdown.basic.length}/25</span>
+                                  <span>Words: {result.analysis1.scoreBreakdown.basic.wordCount}/20</span>
+                                  <span>Readability: {result.analysis1.scoreBreakdown.basic.readability}/30</span>
+                                  <span>Style: {result.analysis1.scoreBreakdown.basic.styleCompliance}/25</span>
+                                  <span>Semantic: {result.analysis1.scoreBreakdown.enhanced.semanticRichness}/15</span>
+                                  <span>Tone: {result.analysis1.scoreBreakdown.enhanced.professionalTone}/15</span>
+                                  <span>Broadcast: {result.analysis1.scoreBreakdown.enhanced.broadcastingStandards}/10</span>
+                                  <span>Complete: {result.analysis1.scoreBreakdown.enhanced.contentCompleteness}/10</span>
+                                  <span>Efficiency: {result.analysis1.scoreBreakdown.enhanced.efficiency}/10</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           {result.analysis1.strengths.length > 0 && (
                             <div className="text-xs">
                               <p className="font-medium text-green-600 flex items-center">
@@ -356,11 +423,36 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                         </div>
                         
                         <div className="space-y-2">
-                          <p className="font-medium">Version 2 (Score: {result.analysis2.qualityScore})</p>
-                          <p className="text-gray-600 text-xs">
-                            {result.analysis2.length} chars, {result.analysis2.wordCount} words, 
-                            {result.analysis2.readabilityScore}% readable
-                          </p>
+                          <p className="font-medium">Version 2</p>
+                          <div className="text-xs space-y-1">
+                            <p className="text-gray-600">
+                              {result.analysis2.length} chars, {result.analysis2.wordCount} words, 
+                              {result.analysis2.readabilityScore}% readable
+                            </p>
+                            <div className="flex items-center space-x-2 flex-wrap">
+                              <span className="text-blue-600 font-medium">Basic: {result.analysis2.qualityScore}/100</span>
+                              <span className="text-purple-600 font-medium">Enhanced: {result.analysis2.enhancedQualityScore}/170</span>
+                              <span className={`px-2 py-1 rounded-full text-xs ${getQualityGrade(result.analysis2.enhancedQualityScore).color}`}>
+                                {getQualityGrade(result.analysis2.enhancedQualityScore).grade}
+                              </span>
+                            </div>
+                            {result.analysis2.scoreBreakdown && (
+                              <div className="bg-gray-50 p-2 rounded text-xs">
+                                <p className="font-medium mb-1">Score Breakdown:</p>
+                                <div className="grid grid-cols-2 gap-1">
+                                  <span>Length: {result.analysis2.scoreBreakdown.basic.length}/25</span>
+                                  <span>Words: {result.analysis2.scoreBreakdown.basic.wordCount}/20</span>
+                                  <span>Readability: {result.analysis2.scoreBreakdown.basic.readability}/30</span>
+                                  <span>Style: {result.analysis2.scoreBreakdown.basic.styleCompliance}/25</span>
+                                  <span>Semantic: {result.analysis2.scoreBreakdown.enhanced.semanticRichness}/15</span>
+                                  <span>Tone: {result.analysis2.scoreBreakdown.enhanced.professionalTone}/15</span>
+                                  <span>Broadcast: {result.analysis2.scoreBreakdown.enhanced.broadcastingStandards}/10</span>
+                                  <span>Complete: {result.analysis2.scoreBreakdown.enhanced.contentCompleteness}/10</span>
+                                  <span>Efficiency: {result.analysis2.scoreBreakdown.enhanced.efficiency}/10</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           {result.analysis2.strengths.length > 0 && (
                             <div className="text-xs">
                               <p className="font-medium text-green-600 flex items-center">
