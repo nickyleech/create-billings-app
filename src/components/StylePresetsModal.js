@@ -175,6 +175,42 @@ const StylePresetsModal = ({ isOpen, onClose, onApplyPreset, onPresetsChange }) 
     }
   };
 
+  const handleDownloadPreset = (preset) => {
+    try {
+      const styleRules = preset.styleRules || preset.style_rules || {};
+      const forbiddenWords = preset.forbiddenWords || preset.forbidden_words || [];
+      
+      const exportData = {
+        version: '1.0',
+        exported: new Date().toISOString(),
+        preset: {
+          id: preset.id,
+          name: preset.name,
+          description: preset.description,
+          characterLimits: preset.characterLimits || preset.character_limits || [],
+          styleRules: styleRules,
+          forbiddenWords: forbiddenWords,
+          isDefault: preset.isDefault || false,
+          createdAt: preset.createdAt || preset.created_at,
+          updatedAt: preset.updatedAt || preset.updated_at
+        }
+      };
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `style-preset-${preset.name.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Error downloading preset: ' + error.message);
+    }
+  };
+
   const handleImportPresets = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -525,6 +561,13 @@ const StylePresetsModal = ({ isOpen, onClose, onApplyPreset, onPresetsChange }) 
                         }`}
                       >
                         Apply Preset
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPreset(preset)}
+                        className="text-xs px-2 py-1 text-gray-600 hover:text-gray-800 border border-gray-300 rounded"
+                        title="Download preset"
+                      >
+                        <Download size={12} />
                       </button>
                       <button
                         onClick={() => setPreviewingPreset(previewingPreset?.id === preset.id ? null : preset)}
