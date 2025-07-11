@@ -364,6 +364,30 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
         <div className="flex-1 overflow-y-auto p-6">
           {!showPreview ? (
             <div className="space-y-6">
+              {/* Getting Started Instructions */}
+              <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-medium text-blue-900 mb-3 flex items-center">
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  Getting Started with Style Guide Creation
+                </h3>
+                <div className="text-sm text-blue-800 space-y-2">
+                  <p><strong>This tool helps you create comprehensive style guides for AI translation training.</strong></p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <div className="bg-white bg-opacity-50 p-3 rounded">
+                      <p className="font-medium text-blue-900">1. Configure</p>
+                      <p className="text-xs">Set up basic information and translation rules</p>
+                    </div>
+                    <div className="bg-white bg-opacity-50 p-3 rounded">
+                      <p className="font-medium text-blue-900">2. Add Language Pairs</p>
+                      <p className="text-xs">Define the languages you work with</p>
+                    </div>
+                    <div className="bg-white bg-opacity-50 p-3 rounded">
+                      <p className="font-medium text-blue-900">3. Train with Samples</p>
+                      <p className="text-xs">Provide before/after examples for AI learning</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
               {/* Basic Information */}
               <section>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
@@ -458,6 +482,18 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
               {/* Language Pairs Management */}
               <section>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Language Pairs Management</h3>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <h4 className="font-medium text-blue-900 mb-2 flex items-center">
+                    <Languages className="w-4 h-4 mr-2" />
+                    Quick Start Guide
+                  </h4>
+                  <div className="text-sm text-blue-800 space-y-2">
+                    <p><strong>Step 1:</strong> Add language pairs you work with (e.g., "French" → "British English")</p>
+                    <p><strong>Step 2:</strong> Use the ↑↓ arrows to prioritize your most common pairs at the top</p>
+                    <p><strong>Step 3:</strong> Add training samples for each pair in the section below</p>
+                    <p><strong>Tip:</strong> Start with 3-5 core language pairs, then add more as needed</p>
+                  </div>
+                </div>
                 <p className="text-sm text-gray-600 mb-4">
                   Manage the language pairs that will be available for translation samples. You can add custom pairs, reorder them, and remove pairs as needed.
                 </p>
@@ -570,8 +606,27 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
               {/* Language Pair Samples */}
               <section>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Language Pair Training Samples</h3>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                  <h4 className="font-medium text-yellow-900 mb-2 flex items-center">
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    How to Use the Training Sample System
+                  </h4>
+                  <div className="text-sm text-yellow-800 space-y-2">
+                    <p><strong>1. Purpose:</strong> Training samples help the AI learn your specific translation preferences and maintain consistency across different content types.</p>
+                    <p><strong>2. Best Practices:</strong></p>
+                    <ul className="list-disc list-inside ml-4 space-y-1">
+                      <li>Add 3-5 samples per language pair for basic training</li>
+                      <li>Include different content types (news, cultural, technical, etc.)</li>
+                      <li>Use real examples from your actual content when possible</li>
+                      <li>Add detailed notes explaining translation decisions</li>
+                      <li>Include challenging examples (idioms, cultural references, etc.)</li>
+                    </ul>
+                    <p><strong>3. Categories to Consider:</strong> News Content, Cultural References, Technical Terms, Marketing Copy, Legal Text, Medical Content, Educational Material</p>
+                    <p><strong>4. Translation Notes:</strong> Explain why you chose specific translations, cultural adaptations, or tone decisions to help the AI learn your preferences.</p>
+                  </div>
+                </div>
                 <p className="text-sm text-gray-600 mb-4">
-                  Add sample translations for specific language pairs to help train the AI and ensure consistent quality.
+                  Add sample translations for specific language pairs to help train the AI and ensure consistent quality. The more examples you provide, the better the AI will understand your translation preferences.
                 </p>
                 
                 {/* Sample Form */}
@@ -652,7 +707,7 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
                       <textarea
                         value={newSample.sourceText}
                         onChange={(e) => setNewSample(prev => ({ ...prev, sourceText: e.target.value }))}
-                        placeholder="Original text in source language"
+                        placeholder="Example: 'Mae'r rhaglen newyddion yn dechrau am saith o'r gloch heno.'"
                         rows="3"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -664,7 +719,7 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
                       <textarea
                         value={newSample.targetText}
                         onChange={(e) => setNewSample(prev => ({ ...prev, targetText: e.target.value }))}
-                        placeholder="Correct translation in target language"
+                        placeholder="Example: 'The news programme begins at seven o'clock tonight.'"
                         rows="3"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -678,7 +733,7 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
                     <textarea
                       value={newSample.notes}
                       onChange={(e) => setNewSample(prev => ({ ...prev, notes: e.target.value }))}
-                      placeholder="Notes about the translation approach, cultural considerations, etc."
+                      placeholder="Example: 'Note the use of 'programme' (British spelling) and formal evening greeting context.'"
                       rows="2"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -730,12 +785,14 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
                           <button
                             onClick={() => editSample(sample)}
                             className="p-1 text-blue-600 hover:text-blue-800"
+                            title="Edit sample"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => deleteSample(sample.id)}
                             className="p-1 text-red-600 hover:text-red-800"
+                            title="Delete sample"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -768,8 +825,20 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
                   
                   {styleGuide.languagePairSamples.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
-                      <p>No language pair samples added yet.</p>
-                      <p className="text-sm">Add samples above to help train the AI for specific language pairs.</p>
+                      <div className="mb-4">
+                        <p className="text-lg font-medium">No training samples added yet</p>
+                        <p className="text-sm">Add samples above to help train the AI for specific language pairs.</p>
+                      </div>
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-left max-w-md mx-auto">
+                        <h4 className="font-medium text-green-900 mb-2">Example Training Sample:</h4>
+                        <div className="text-sm text-green-800 space-y-2">
+                          <p><strong>Language Pair:</strong> Welsh → British English</p>
+                          <p><strong>Category:</strong> News Content</p>
+                          <p><strong>Source:</strong> Mae'r rhaglen newyddion yn dechrau am saith o'r gloch</p>
+                          <p><strong>Target:</strong> The news programme begins at seven o'clock</p>
+                          <p><strong>Notes:</strong> Note the use of 'programme' (British spelling) rather than 'program'</p>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
