@@ -10,7 +10,7 @@ const HelpModal = ({ isOpen, onClose }) => {
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-medium text-gray-900">Help & User Guide</h2>
-            <p className="text-sm text-gray-500">Updated with latest features - January 2025</p>
+            <p className="text-sm text-gray-500">Updated with Simple Mode - January 2025</p>
           </div>
           <button
             onClick={onClose}
@@ -35,6 +35,17 @@ const HelpModal = ({ isOpen, onClose }) => {
                   <li>Start creating professional content variations!</li>
                 </ol>
               </div>
+              <div className="bg-green-50 rounded-lg p-4">
+                <h4 className="font-medium text-green-900 mb-2">✨ New: Simple Mode (Default)</h4>
+                <p className="text-sm text-green-800 mb-2">
+                  The app now opens in Simple Mode by default, perfect for quick content creation without configuration.
+                </p>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>• <strong>Billing:</strong> Just paste content and click "Generate" for 3 perfect sizes</li>
+                  <li>• <strong>Translation:</strong> Choose language pair, upload file, and translate</li>
+                  <li>• <strong>Advanced Users:</strong> Click "Switch to Advanced" for all professional features</li>
+                </ul>
+              </div>
             </section>
 
             {/* Main Features */}
@@ -42,14 +53,27 @@ const HelpModal = ({ isOpen, onClose }) => {
               <h3 className="text-lg font-medium text-gray-900 mb-3">Main Features</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 
-                {/* Content Generation */}
+                {/* Simple Mode Features */}
+                <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200">
+                  <h4 className="font-medium text-green-900 mb-2">Simple Mode (Default)</h4>
+                  <ul className="text-sm text-green-700 space-y-1">
+                    <li>• <strong>Billing:</strong> 3 fixed sizes (Short, Medium, Long)</li>
+                    <li>• <strong>Translation:</strong> 5 common language pairs</li>
+                    <li>• No configuration needed - just paste and generate</li>
+                    <li>• Perfect for quick, professional results</li>
+                    <li>• Follows PA TV style guide automatically</li>
+                  </ul>
+                </div>
+
+                {/* Advanced Mode Features */}
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Content Generation</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">Advanced Mode</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Paste your original content</li>
-                    <li>• Select a style (Drama, Documentary, etc.)</li>
-                    <li>• Click "Generate" for 3 professional versions</li>
-                    <li>• Each version follows PA TV style guide</li>
+                    <li>• Fully customisable character limits</li>
+                    <li>• Style presets and custom rules</li>
+                    <li>• Batch processing capabilities</li>
+                    <li>• Excel analysis and reporting</li>
+                    <li>• Complete professional toolkit</li>
                   </ul>
                 </div>
 
@@ -93,6 +117,17 @@ const HelpModal = ({ isOpen, onClose }) => {
                     <li>• Timestamps and style used</li>
                     <li>• Delete individual items</li>
                     <li>• Clear all history option</li>
+                  </ul>
+                </div>
+
+                {/* Translation Tool */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Translation Tool</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• <strong>Simple Mode:</strong> Welsh, Irish, French to English</li>
+                    <li>• <strong>Advanced Mode:</strong> 12+ languages with quality metrics</li>
+                    <li>• Upload Excel files for batch translation</li>
+                    <li>• Professional broadcasting standards</li>
                   </ul>
                 </div>
               </div>
@@ -160,7 +195,7 @@ const HelpModal = ({ isOpen, onClose }) => {
                     <li>• Preview full AI prompts</li>
                     <li>• Understand rule impacts</li>
                     <li>• Test with sample content</li>
-                    <li>• Optimize style settings</li>
+                    <li>• Optimise style settings</li>
                   </ul>
                 </div>
               </div>
@@ -254,7 +289,7 @@ const HelpModal = ({ isOpen, onClose }) => {
                     </ol>
                   </div>
                   <div className="mt-3 text-xs text-blue-700">
-                    <strong>Benefits:</strong> Better tweaking, rule understanding, prompt optimization, debugging style issues
+                    <strong>Benefits:</strong> Better tweaking, rule understanding, prompt optimisation, debugging style issues
                   </div>
                 </div>
 
@@ -311,8 +346,10 @@ const HelpModal = ({ isOpen, onClose }) => {
               <h3 className="text-lg font-medium text-gray-900 mb-3">Tips & Best Practices</h3>
               <div className="bg-yellow-50 rounded-lg p-4">
                 <ul className="text-sm text-yellow-900 space-y-2">
+                  <li>• <strong>Start Simple:</strong> Use Simple Mode for quick results without configuration</li>
                   <li>• <strong>Quality Input:</strong> Provide clear, well-written original content for best results</li>
-                  <li>• <strong>Style Selection:</strong> Choose the style that matches your content type</li>
+                  <li>• <strong>Mode Selection:</strong> Simple Mode for speed, Advanced Mode for complete control</li>
+                  <li>• <strong>Translation:</strong> Use Simple Mode for common language pairs, Advanced for detailed analysis</li>
                   <li>• <strong>Character Limits:</strong> Set realistic limits - too short may truncate important information</li>
                   <li>• <strong>Forbidden Words:</strong> Use style presets to avoid specific terms in your content</li>
                   <li>• <strong>Batch Processing:</strong> Great for consistent formatting across multiple items</li>

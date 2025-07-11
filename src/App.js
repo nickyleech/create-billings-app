@@ -11,6 +11,8 @@ import SettingsModal from './components/SettingsModal';
 import HelpModal from './components/HelpModal';
 import ExcelAnalysisModal from './components/ExcelAnalysisModal';
 import TranslationPage from './components/TranslationPage';
+import SimpleTranslationPage from './components/SimpleTranslationPage';
+import SimpleBillingTool from './components/SimpleBillingTool';
 import ActiveStylePreview from './components/ActiveStylePreview';
 import { generateContent } from './utils/api';
 
@@ -54,6 +56,8 @@ const MainApp = () => {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [currentSection, setCurrentSection] = useState('billing'); // 'billing' or 'translation'
+  const [simpleMode, setSimpleMode] = useState(true);
+  const [simpleBillingMode, setSimpleBillingMode] = useState(true);
   const [activePreset, setActivePreset] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState('default');
   const [hasCustomPresets, setHasCustomPresets] = useState(false);
@@ -495,6 +499,18 @@ Your entire response must be valid JSON only. Do not include any other text or f
             <Languages className="w-4 h-4" />
             <span>Translation</span>
           </button>
+          {currentSection === 'translation' && (
+            <button
+              onClick={() => setSimpleMode(!simpleMode)}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors text-xs ${
+                simpleMode 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-gray-100 text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <span>{simpleMode ? 'Switch to Advanced' : 'Switch to Simple'}</span>
+            </button>
+          )}
           <button
             onClick={() => setCurrentSection('billing')}
             className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
@@ -506,6 +522,18 @@ Your entire response must be valid JSON only. Do not include any other text or f
             <FileText className="w-4 h-4" />
             <span>Billing</span>
           </button>
+          {currentSection === 'billing' && (
+            <button
+              onClick={() => setSimpleBillingMode(!simpleBillingMode)}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors text-xs ${
+                simpleBillingMode 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-gray-100 text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <span>{simpleBillingMode ? 'Switch to Advanced' : 'Switch to Simple'}</span>
+            </button>
+          )}
           <button
             onClick={() => setShowHelpModal(true)}
             className="flex items-center space-x-2 px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
@@ -545,15 +573,34 @@ Your entire response must be valid JSON only. Do not include any other text or f
 
   const renderContent = () => {
     if (currentSection === 'translation') {
+      if (simpleMode) {
+        return (
+          <SimpleTranslationPage 
+            user={user}
+            generateContent={generateContent}
+            onNavigateBack={() => setCurrentSection('billing')}
+          />
+        );
+      } else {
+        return (
+          <TranslationPage 
+            user={user}
+            generateContent={generateContent}
+            onNavigateBack={() => setCurrentSection('billing')}
+          />
+        );
+      }
+    }
+    if (simpleBillingMode) {
       return (
-        <TranslationPage 
+        <SimpleBillingTool 
           user={user}
           generateContent={generateContent}
-          onNavigateBack={() => setCurrentSection('billing')}
         />
       );
+    } else {
+      return <BillingTool />;
     }
-    return <BillingTool />;
   };
 
   // Billing tool component (the original functionality)
