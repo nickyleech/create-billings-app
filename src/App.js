@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle, BarChart3, Languages, FileText } from 'lucide-react';
+import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle, BarChart3, Languages, FileText, Home } from 'lucide-react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginForm from './components/LoginForm';
+import HomePage from './components/HomePage';
 import CustomLimitsModal from './components/CustomLimitsModal';
 import StylePresetsModal from './components/StylePresetsModal';
 import BatchProcessingModal from './components/BatchProcessingModal';
@@ -55,7 +56,7 @@ const MainApp = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-  const [currentSection, setCurrentSection] = useState('billing'); // 'billing' or 'translation'
+  const [currentSection, setCurrentSection] = useState('home'); // 'home', 'billing' or 'translation'
   const [simpleMode, setSimpleMode] = useState(true);
   const [simpleBillingMode, setSimpleBillingMode] = useState(true);
   const [activePreset, setActivePreset] = useState(null);
@@ -482,9 +483,13 @@ Your entire response must be valid JSON only. Do not include any other text or f
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-light text-gray-900">
-            Create Billings Pro
-          </h1>
+          <button
+            onClick={() => setCurrentSection('home')}
+            className="flex items-center space-x-2 text-2xl font-light text-gray-900 hover:text-blue-600 transition-colors"
+          >
+            <Home className="w-6 h-6" />
+            <span>Create Billings Pro</span>
+          </button>
         </div>
         
         <div className="flex items-center space-x-4">
@@ -572,13 +577,16 @@ Your entire response must be valid JSON only. Do not include any other text or f
   );
 
   const renderContent = () => {
+    if (currentSection === 'home') {
+      return <HomePage onSelectSection={setCurrentSection} />;
+    }
     if (currentSection === 'translation') {
       if (simpleMode) {
         return (
           <SimpleTranslationPage 
             user={user}
             generateContent={generateContent}
-            onNavigateBack={() => setCurrentSection('billing')}
+            onNavigateBack={() => setCurrentSection('home')}
           />
         );
       } else {
@@ -586,7 +594,7 @@ Your entire response must be valid JSON only. Do not include any other text or f
           <TranslationPage 
             user={user}
             generateContent={generateContent}
-            onNavigateBack={() => setCurrentSection('billing')}
+            onNavigateBack={() => setCurrentSection('home')}
           />
         );
       }
@@ -804,8 +812,10 @@ Your entire response must be valid JSON only. Do not include any other text or f
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {currentSection === 'billing' && <Header />}
-      {currentSection === 'billing' ? (
+      {currentSection !== 'home' && <Header />}
+      {currentSection === 'home' ? (
+        renderContent()
+      ) : currentSection === 'billing' ? (
         <main className="p-6">
           {renderContent()}
         </main>
