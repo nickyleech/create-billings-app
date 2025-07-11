@@ -357,17 +357,17 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h4 className="text-sm font-medium text-gray-700">
-                        Style Guide Settings
+                        Style Guide Manager
                       </h4>
                       <button
                         onClick={() => setShowStyleGuideCreator(true)}
                         className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700"
                       >
-                        Create Style Guide
+                        Open Style Guide Manager
                       </button>
                     </div>
                     <p className="text-sm text-gray-500">
-                      Create custom style guides for specific language pairs to ensure consistent translations.
+                      Create, edit, and manage comprehensive style guides with language pairs, training samples, and translation rules.
                     </p>
                   </div>
                 </div>

@@ -349,9 +349,9 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
           <div>
             <h2 className="text-xl font-medium text-gray-900 flex items-center">
               <BookOpen className="w-5 h-5 mr-2 text-blue-600" />
-              Create Default Style Guide
+              Style Guide Manager
             </h2>
-            <p className="text-sm text-gray-500">Create a universal style guide for all language pairs</p>
+            <p className="text-sm text-gray-500">Create, manage, and train comprehensive style guides for translation workflows</p>
           </div>
           <button
             onClick={onClose}
@@ -368,22 +368,22 @@ Generated on: ${new Date().toLocaleDateString('en-GB')}
               <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-medium text-blue-900 mb-3 flex items-center">
                   <BookOpen className="w-5 h-5 mr-2" />
-                  Getting Started with Style Guide Creation
+                  Style Guide Manager - Getting Started
                 </h3>
                 <div className="text-sm text-blue-800 space-y-2">
-                  <p><strong>This tool helps you create comprehensive style guides for AI translation training.</strong></p>
+                  <p><strong>This comprehensive tool helps you create, manage, and train style guides for professional translation workflows.</strong></p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                     <div className="bg-white bg-opacity-50 p-3 rounded">
-                      <p className="font-medium text-blue-900">1. Configure</p>
-                      <p className="text-xs">Set up basic information and translation rules</p>
+                      <p className="font-medium text-blue-900">1. Configure & Customize</p>
+                      <p className="text-xs">Set up style rules, guidelines, and translation preferences</p>
                     </div>
                     <div className="bg-white bg-opacity-50 p-3 rounded">
-                      <p className="font-medium text-blue-900">2. Add Language Pairs</p>
-                      <p className="text-xs">Define the languages you work with</p>
+                      <p className="font-medium text-blue-900">2. Manage Language Pairs</p>
+                      <p className="text-xs">Add, reorder, and organize your translation languages</p>
                     </div>
                     <div className="bg-white bg-opacity-50 p-3 rounded">
-                      <p className="font-medium text-blue-900">3. Train with Samples</p>
-                      <p className="text-xs">Provide before/after examples for AI learning</p>
+                      <p className="font-medium text-blue-900">3. Train & Export</p>
+                      <p className="text-xs">Add training samples, preview, and export style guides</p>
                     </div>
                   </div>
                 </div>
