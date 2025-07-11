@@ -1,20 +1,16 @@
 // Document parsing utilities for Welsh-English translation
-// Handles RTF, DOC, DOCX, and TXT files
+// Handles Excel (.xlsx, .xls) files
 
-import mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
 
 export const parseDocument = async (file) => {
   const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
   
   try {
     switch (fileExtension) {
-      case '.txt':
-        return await parseTxtFile(file);
-      case '.rtf':
-        return await parseRtfFile(file);
-      case '.doc':
-      case '.docx':
-        return await parseDocFile(file);
+      case '.xlsx':
+      case '.xls':
+        return await parseExcelFile(file);
       default:
         throw new Error(`Unsupported file type: ${fileExtension}`);
     }
@@ -24,78 +20,32 @@ export const parseDocument = async (file) => {
   }
 };
 
-// Parse plain text files
-const parseTxtFile = (file) => {
+// Parse Excel files
+const parseExcelFile = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
     reader.onload = (e) => {
       try {
-        const content = e.target.result;
-        resolve({
-          text: content,
-          metadata: {
-            filename: file.name,
-            size: file.size,
-            type: 'text/plain'
-          }
-        });
-      } catch (error) {
-        reject(error);
-      }
-    };
-    
-    reader.onerror = () => reject(new Error('Failed to read text file'));
-    reader.readAsText(file, 'utf-8');
-  });
-};
-
-// Parse RTF files
-const parseRtfFile = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const rtfContent = e.target.result;
-        const plainText = extractTextFromRTF(rtfContent);
+        const workbook = XLSX.read(e.target.result, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        // Convert the Excel data to text by joining all cells
+        const allText = jsonData
+          .map(row => row.join(' '))
+          .join('\n')
+          .trim();
         
         resolve({
-          text: plainText,
-          metadata: {
-            filename: file.name,
-            size: file.size,
-            type: 'application/rtf',
-            originalRtf: rtfContent
-          }
-        });
-      } catch (error) {
-        reject(error);
-      }
-    };
-    
-    reader.onerror = () => reject(new Error('Failed to read RTF file'));
-    reader.readAsText(file, 'utf-8');
-  });
-};
-
-// Parse DOC/DOCX files using mammoth
-const parseDocFile = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = async (e) => {
-      try {
-        const arrayBuffer = e.target.result;
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        
-        resolve({
-          text: result.value,
+          text: allText,
           metadata: {
             filename: file.name,
             size: file.size,
             type: file.type,
-            messages: result.messages
+            sheets: workbook.SheetNames,
+            rows: jsonData.length
           }
         });
       } catch (error) {
@@ -103,57 +53,11 @@ const parseDocFile = (file) => {
       }
     };
     
-    reader.onerror = () => reject(new Error('Failed to read DOC/DOCX file'));
-    reader.readAsArrayBuffer(file);
+    reader.onerror = () => reject(new Error('Failed to read Excel file'));
+    reader.readAsBinaryString(file);
   });
 };
 
-// RTF text extraction utility
-const extractTextFromRTF = (rtfContent) => {
-  try {
-    let text = rtfContent;
-    
-    // Remove RTF header and control words
-    text = text.replace(/\\rtf\d+/g, '');
-    text = text.replace(/\\ansi/g, '');
-    text = text.replace(/\\deff\d+/g, '');
-    text = text.replace(/\\deflang\d+/g, '');
-    
-    // Remove font table
-    text = text.replace(/\{\\fonttbl[^}]*\}/g, '');
-    
-    // Remove color table
-    text = text.replace(/\{\\colortbl[^}]*\}/g, '');
-    
-    // Remove style sheet
-    text = text.replace(/\{\\stylesheet[^}]*\}/g, '');
-    
-    // Remove generator information
-    text = text.replace(/\{\\\\generator[^}]*\}/g, '');
-    
-    // Remove control words with parameters
-    text = text.replace(/\\[a-z]+\d*\s?/gi, '');
-    
-    // Remove control symbols
-    text = text.replace(/\\[^a-z]/gi, '');
-    
-    // Remove braces
-    text = text.replace(/[{}]/g, '');
-    
-    // Clean up multiple spaces and newlines
-    text = text.replace(/\s+/g, ' ');
-    text = text.replace(/\n\s*\n/g, '\n\n');
-    
-    // Trim whitespace
-    text = text.trim();
-    
-    return text;
-  } catch (error) {
-    console.error('Error extracting text from RTF:', error);
-    // Fallback: return original content with basic cleanup
-    return rtfContent.replace(/[{}\\]/g, '').replace(/\s+/g, ' ').trim();
-  }
-};
 
 // Welsh text identification utility
 export const identifyWelshSegments = (text) => {

@@ -24,11 +24,11 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
       setTranslationResults([]);
       
       // Validate file type
-      const allowedTypes = ['.xlsx', '.xls', '.rtf', '.doc', '.docx', '.txt'];
+      const allowedTypes = ['.xlsx', '.xls'];
       const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
       
       if (!allowedTypes.includes(fileExtension)) {
-        setError('Please select a valid file type: XLSX, XLS, RTF, DOC, DOCX, or TXT');
+        setError('Please select a valid Excel file: XLSX or XLS');
         setSelectedFile(null);
         return;
       }
@@ -170,7 +170,7 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileSelect}
-                  accept=".xlsx,.xls,.rtf,.doc,.docx,.txt"
+                  accept=".xlsx,.xls"
                   className="hidden"
                 />
                 
@@ -181,7 +181,7 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                       Click to select an Excel schedule or drag and drop
                     </p>
                     <p className="text-sm text-gray-500 mb-4">
-                      Supported formats: XLSX, XLS, RTF, DOC, DOCX, TXT
+                      Supported formats: XLSX, XLS
                     </p>
                     <div className="flex justify-center space-x-3">
                       <button
