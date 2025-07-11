@@ -1,7 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { X, Upload, Download, FileText, Languages, Loader } from 'lucide-react';
+import { X, Upload, Download, FileText, Languages, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { parseDocument, identifyWelshSegments, generateTranslationPrompt, reconstructDocument } from '../utils/parseDocument';
+import { parseDocument, reconstructDocument } from '../utils/parseDocument';
+import { identifyMultiLanguageSegments, detectLanguage, getConfidenceColor, getConfidenceDescription } from '../utils/languageDetection';
+import { generateStyleAwarePrompt, validateTranslation, generateQualityReport } from '../utils/styleGuide';
+import { getLanguageByCode } from '../utils/languageConfig';
+import LanguagePicker from './LanguagePicker';
+import StyleGuideSelector from './StyleGuideSelector';
 
 const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -11,6 +16,11 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
   const [processingStep, setProcessingStep] = useState('');
   const [error, setError] = useState('');
   const [translationResults, setTranslationResults] = useState([]);
+  const [sourceLanguage, setSourceLanguage] = useState('cy'); // Default to Welsh
+  const [targetLanguage, setTargetLanguage] = useState('en-gb'); // Default to British English
+  const [selectedStyleGuide, setSelectedStyleGuide] = useState('bbc'); // Default to BBC style guide
+  const [detectedLanguage, setDetectedLanguage] = useState(null);
+  const [qualityReport, setQualityReport] = useState(null);
   const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
@@ -43,44 +53,67 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
     try {
       const parsedDocument = await parseDocument(file);
       setOriginalContent(parsedDocument.text);
+      
+      // Detect language automatically
+      const detection = detectLanguage(parsedDocument.text);
+      setDetectedLanguage(detection);
+      
+      // Auto-set source language if detection is confident
+      if (detection.confidence > 0.6) {
+        setSourceLanguage(detection.language);
+      }
     } catch (error) {
       setError(`Failed to parse file: ${error.message}`);
     }
   };
 
-  const translateToEnglish = async () => {
-    if (!originalContent || !user) return;
+  const translateContent = async () => {
+    if (!originalContent || !user || !sourceLanguage || !targetLanguage) return;
     
     setIsProcessing(true);
     setError('');
-    setProcessingStep('Identifying Welsh content...');
+    setProcessingStep('Identifying content to translate...');
     
     try {
-      // Identify Welsh segments
-      const welshSegments = identifyWelshSegments(originalContent);
+      // Identify segments that need translation
+      const segments = identifyMultiLanguageSegments(originalContent, targetLanguage);
       
-      if (welshSegments.length === 0) {
-        setError('No Welsh content detected in the uploaded file.');
+      if (segments.length === 0) {
+        setError('No content requiring translation detected in the uploaded file.');
         setIsProcessing(false);
         return;
       }
       
-      setProcessingStep(`Translating ${welshSegments.length} Welsh segments...`);
+      setProcessingStep(`Translating ${segments.length} segments...`);
       
-      // Translate each Welsh segment
+      // Translate each segment
       const translatedSegments = [];
+      const sourceLang = getLanguageByCode(sourceLanguage);
+      const targetLang = getLanguageByCode(targetLanguage);
       
-      for (let i = 0; i < welshSegments.length; i++) {
-        const segment = welshSegments[i];
-        setProcessingStep(`Translating segment ${i + 1} of ${welshSegments.length}...`);
+      for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
+        setProcessingStep(`Translating segment ${i + 1} of ${segments.length}...`);
         
         try {
-          const translationPrompt = generateTranslationPrompt(segment.originalText);
+          const translationPrompt = generateStyleAwarePrompt(
+            segment.originalText,
+            sourceLang?.name || sourceLanguage,
+            targetLang?.name || targetLanguage,
+            selectedStyleGuide
+          );
+          
           const translation = await generateContent(translationPrompt, user.id);
+          const cleanTranslation = translation.trim();
+          
+          // Validate translation quality
+          const validation = validateTranslation(cleanTranslation, selectedStyleGuide);
           
           translatedSegments.push({
             ...segment,
-            translatedText: translation.trim()
+            translatedText: cleanTranslation,
+            validation: validation,
+            qualityScore: validation.score
           });
           
           // Small delay to avoid overwhelming the API
@@ -90,7 +123,8 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
           console.error('Translation error for segment:', segment.originalText, translationError);
           translatedSegments.push({
             ...segment,
-            translatedText: '[Translation failed]'
+            translatedText: '[Translation failed]',
+            validation: { valid: false, errors: ['Translation failed'], score: 0 }
           });
         }
       }
@@ -101,6 +135,11 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
       const translatedDocument = reconstructDocument(originalContent, translatedSegments);
       
       setTranslatedContent(translatedDocument);
+      
+      // Generate quality report
+      const qualityReport = generateQualityReport(originalContent, translatedDocument, selectedStyleGuide);
+      setQualityReport(qualityReport);
+      
       setProcessingStep('Translation complete!');
       
     } catch (error) {
@@ -132,6 +171,8 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
     setTranslationResults([]);
     setError('');
     setProcessingStep('');
+    setDetectedLanguage(null);
+    setQualityReport(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -263,7 +304,7 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                         Change File
                       </button>
                       <button
-                        onClick={translateToEnglish}
+                        onClick={translateContent}
                         disabled={isProcessing}
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm font-medium"
                       >
@@ -295,6 +336,76 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                 </p>
               </div>
             </section>
+
+            {/* Language Selection Section */}
+            {(originalContent || !selectedFile) && (
+              <section>
+                <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                  <Languages className="w-5 h-5 mr-2 text-blue-600" />
+                  Language Settings
+                </h3>
+                
+                <div className="space-y-6">
+                  <LanguagePicker
+                    sourceLanguage={sourceLanguage}
+                    targetLanguage={targetLanguage}
+                    onSourceLanguageChange={setSourceLanguage}
+                    onTargetLanguageChange={setTargetLanguage}
+                  />
+                  
+                  <StyleGuideSelector
+                    selectedStyleGuide={selectedStyleGuide}
+                    onStyleGuideChange={setSelectedStyleGuide}
+                    sourceLanguage={sourceLanguage}
+                    targetLanguage={targetLanguage}
+                  />
+                </div>
+              </section>
+            )}
+
+            {/* Language Detection Results */}
+            {detectedLanguage && (
+              <section>
+                <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+                  Language Detection
+                </h3>
+                
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-900">
+                        Detected Language: {getLanguageByCode(detectedLanguage.language)?.name || detectedLanguage.language}
+                      </p>
+                      <p className="text-sm text-green-700">
+                        Confidence: {getConfidenceDescription(detectedLanguage.confidence)} ({Math.round(detectedLanguage.confidence * 100)}%)
+                      </p>
+                    </div>
+                    <div className={`px-2 py-1 rounded text-xs font-medium ${getConfidenceColor(detectedLanguage.confidence)}`}>
+                      {Math.round(detectedLanguage.confidence * 100)}%
+                    </div>
+                  </div>
+                  
+                  {detectedLanguage.candidates && detectedLanguage.candidates.length > 1 && (
+                    <div className="mt-3 pt-3 border-t border-green-200">
+                      <p className="text-sm font-medium text-green-900 mb-2">Other Candidates:</p>
+                      <div className="space-y-1">
+                        {detectedLanguage.candidates.slice(1).map((candidate, index) => (
+                          <div key={index} className="flex items-center justify-between text-sm">
+                            <span className="text-green-700">
+                              {candidate.languageInfo?.name || candidate.language}
+                            </span>
+                            <span className="text-green-600">
+                              {Math.round(candidate.confidence * 100)}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
 
             {/* Processing Status */}
             {isProcessing && (
@@ -351,6 +462,69 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
               </section>
             )}
 
+            {/* Quality Report Section */}
+            {qualityReport && (
+              <section>
+                <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                  <AlertCircle className="w-5 h-5 mr-2 text-orange-600" />
+                  Quality Report
+                </h3>
+                
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium text-orange-900 mb-2">Style Guide Compliance</h4>
+                      <p className="text-sm text-orange-800 mb-2">
+                        <strong>Guide:</strong> {qualityReport.styleGuide.name}
+                      </p>
+                      <p className="text-sm text-orange-800 mb-2">
+                        <strong>Overall Score:</strong> {qualityReport.validation.score}/100
+                      </p>
+                      <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                        qualityReport.validation.score >= 80 ? 'bg-green-100 text-green-800' :
+                        qualityReport.validation.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {qualityReport.validation.score >= 80 ? 'Excellent' :
+                         qualityReport.validation.score >= 60 ? 'Good' : 'Needs Improvement'}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium text-orange-900 mb-2">Translation Metrics</h4>
+                      <div className="space-y-1 text-sm text-orange-800">
+                        <p><strong>Word Count:</strong> {qualityReport.metrics.wordCount}</p>
+                        <p><strong>Length Ratio:</strong> {qualityReport.metrics.lengthRatio.toFixed(2)}</p>
+                        <p><strong>Readability:</strong> {qualityReport.metrics.readabilityScore}/100</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {qualityReport.validation.errors.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-orange-200">
+                      <h4 className="font-medium text-orange-900 mb-2">Issues Found:</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-orange-800">
+                        {qualityReport.validation.errors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {qualityReport.validation.suggestions.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-orange-200">
+                      <h4 className="font-medium text-orange-900 mb-2">Suggestions:</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-orange-800">
+                        {qualityReport.validation.suggestions.map((suggestion, index) => (
+                          <li key={index}>{suggestion}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
             {/* Download Section */}
             {translatedContent && (
               <section>
@@ -361,7 +535,7 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-green-900 mb-3">
-                    Translation complete! Your document has been translated from Welsh to British English.
+                    Translation complete! Your document has been translated from {getLanguageByCode(sourceLanguage)?.name || sourceLanguage} to {getLanguageByCode(targetLanguage)?.name || targetLanguage}.
                   </p>
                   <div className="flex space-x-3">
                     <button
