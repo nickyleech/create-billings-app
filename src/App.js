@@ -11,6 +11,7 @@ import SettingsModal from './components/SettingsModal';
 import HelpModal from './components/HelpModal';
 import ExcelAnalysisModal from './components/ExcelAnalysisModal';
 import TranslationModal from './components/TranslationModal';
+import TranslationPage from './components/TranslationPage';
 import ActiveStylePreview from './components/ActiveStylePreview';
 import { generateContent } from './utils/api';
 
@@ -54,6 +55,7 @@ const MainApp = () => {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [showTranslationModal, setShowTranslationModal] = useState(false);
+  const [currentSection, setCurrentSection] = useState('billing'); // 'billing' or 'translation'
   const [activePreset, setActivePreset] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState('default');
   const [hasCustomPresets, setHasCustomPresets] = useState(false);
@@ -485,11 +487,26 @@ Your entire response must be valid JSON only. Do not include any other text or f
         
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => setShowTranslationModal(true)}
-            className="flex items-center space-x-2 px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+            onClick={() => setCurrentSection('translation')}
+            className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+              currentSection === 'translation' 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
           >
             <Languages className="w-4 h-4" />
             <span>Translation</span>
+          </button>
+          <button
+            onClick={() => setCurrentSection('billing')}
+            className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+              currentSection === 'billing' 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>Billing</span>
           </button>
           <button
             onClick={() => setShowHelpModal(true)}
@@ -529,6 +546,15 @@ Your entire response must be valid JSON only. Do not include any other text or f
   );
 
   const renderContent = () => {
+    if (currentSection === 'translation') {
+      return (
+        <TranslationPage 
+          user={user}
+          generateContent={generateContent}
+          onNavigateBack={() => setCurrentSection('billing')}
+        />
+      );
+    }
     return <BillingTool />;
   };
 
@@ -733,10 +759,14 @@ Your entire response must be valid JSON only. Do not include any other text or f
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="p-6">
-        {renderContent()}
-      </main>
+      {currentSection === 'billing' && <Header />}
+      {currentSection === 'billing' ? (
+        <main className="p-6">
+          {renderContent()}
+        </main>
+      ) : (
+        renderContent()
+      )}
       
       <CustomLimitsModal
         isOpen={showLimitsModal}
