@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Palette, Sliders, History, Layers, Download, HelpCircle } from 'lucide-react';
+import { X, Palette, Sliders, History, Layers, Download, HelpCircle, BarChart3, Eye, Target, Info } from 'lucide-react';
 
 const HelpModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -8,7 +8,10 @@ const HelpModal = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className="text-xl font-medium text-gray-900">Help & User Guide</h2>
+          <div>
+            <h2 className="text-xl font-medium text-gray-900">Help & User Guide</h2>
+            <p className="text-sm text-gray-500">Updated with latest features - January 2025</p>
+          </div>
           <button
             onClick={onClose}
             className="p-1 text-gray-400 hover:text-gray-600 rounded"
@@ -74,7 +77,8 @@ const HelpModal = ({ isOpen, onClose }) => {
                     <li>• Create custom style rules</li>
                     <li>• Add forbidden words to avoid</li>
                     <li>• Set custom character limits</li>
-                    <li>• Saved per user account</li>
+                    <li>• <span className="text-blue-600 font-medium">NEW:</span> Preview AI instructions</li>
+                    <li>• <span className="text-blue-600 font-medium">NEW:</span> See full AI prompt</li>
                   </ul>
                 </div>
 
@@ -126,6 +130,117 @@ const HelpModal = ({ isOpen, onClose }) => {
                     <li>• Social media formats</li>
                   </ul>
                 </div>
+
+                {/* Excel Analysis - NEW */}
+                <div className="bg-orange-50 rounded-lg p-4 border-2 border-orange-200">
+                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                    <BarChart3 className="w-4 h-4 mr-1 text-orange-600" />
+                    Excel Analysis <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded ml-2">NEW</span>
+                  </h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Compare two versions of content</li>
+                    <li>• Quality scoring & readability analysis</li>
+                    <li>• PA TV style compliance checking</li>
+                    <li>• Detailed improvement suggestions</li>
+                    <li>• Export analysis results</li>
+                  </ul>
+                </div>
+
+                {/* Style Transparency - NEW */}
+                <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                    <Eye className="w-4 h-4 mr-1 text-blue-600" />
+                    Style Transparency <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">NEW</span>
+                  </h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• See exact AI instructions</li>
+                    <li>• Preview full AI prompts</li>
+                    <li>• Understand rule impacts</li>
+                    <li>• Test with sample content</li>
+                    <li>• Optimize style settings</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            {/* Recent Updates */}
+            <section>
+              <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                <Info className="w-5 h-5 mr-2 text-green-600" />
+                Recent Updates & New Features
+              </h3>
+              
+              <div className="space-y-4">
+                {/* Excel Analysis */}
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <h4 className="font-medium text-orange-900 mb-2 flex items-center">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Excel Analysis Tool
+                  </h4>
+                  <p className="text-sm text-orange-800 mb-3">
+                    Compare and analyze two versions of content with advanced quality metrics and PA TV style compliance checking.
+                  </p>
+                  <div className="bg-white rounded-md p-3">
+                    <h5 className="font-medium text-gray-900 mb-2">How to Use:</h5>
+                    <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside">
+                      <li>Click "Excel Analysis" button</li>
+                      <li>Upload Excel file with Version 1 and Version 2 columns</li>
+                      <li>Map your columns to the analysis fields</li>
+                      <li>Click "Analyze Content" to see detailed comparison</li>
+                      <li>Export results or download template for future use</li>
+                    </ol>
+                  </div>
+                  <div className="mt-3 text-xs text-orange-700">
+                    <strong>Features:</strong> Quality scoring, readability analysis, style compliance, improvement suggestions, overall reporting
+                  </div>
+                </div>
+
+                {/* Style Transparency */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2 flex items-center">
+                    <Eye className="w-4 h-4 mr-2" />
+                    Style Preset Transparency
+                  </h4>
+                  <p className="text-sm text-blue-800 mb-3">
+                    See exactly what instructions the AI receives and how your style presets influence the output.
+                  </p>
+                  <div className="bg-white rounded-md p-3">
+                    <h5 className="font-medium text-gray-900 mb-2">How to Use:</h5>
+                    <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside">
+                      <li>In Style Presets, click the 👁️ eye icon next to any preset</li>
+                      <li>When creating presets, view live preview of AI instructions</li>
+                      <li>On main screen, toggle active preset preview</li>
+                      <li>Use sample text to test how rules affect content</li>
+                      <li>View the complete AI prompt being sent</li>
+                    </ol>
+                  </div>
+                  <div className="mt-3 text-xs text-blue-700">
+                    <strong>Benefits:</strong> Better tweaking, rule understanding, prompt optimization, debugging style issues
+                  </div>
+                </div>
+
+                {/* Character Limit Enforcement */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="font-medium text-green-900 mb-2 flex items-center">
+                    <Target className="w-4 h-4 mr-2" />
+                    Enhanced Character Limit Enforcement
+                  </h4>
+                  <p className="text-sm text-green-800 mb-3">
+                    Version 1 now guaranteed to never exceed 90 characters, with improved AI prompts and client-side validation.
+                  </p>
+                  <div className="bg-white rounded-md p-3">
+                    <h5 className="font-medium text-gray-900 mb-2">Improvements:</h5>
+                    <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
+                      <li>Stricter AI prompt instructions ("MUST NOT exceed" instead of "Maximum")</li>
+                      <li>Client-side validation with automatic truncation if needed</li>
+                      <li>Real-time character count display with over-limit warnings</li>
+                      <li>Visual indicators when content exceeds limits</li>
+                    </ul>
+                  </div>
+                  <div className="mt-3 text-xs text-green-700">
+                    <strong>Result:</strong> Version 1 always stays within 90 characters including spaces
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -163,6 +278,9 @@ const HelpModal = ({ isOpen, onClose }) => {
                   <li>• <strong>Forbidden Words:</strong> Use style presets to avoid specific terms in your content</li>
                   <li>• <strong>Batch Processing:</strong> Great for consistent formatting across multiple items</li>
                   <li>• <strong>Export Early:</strong> Save your work in multiple formats for different uses</li>
+                  <li>• <strong>Style Transparency:</strong> Use the preview feature to understand how your presets affect AI output</li>
+                  <li>• <strong>Excel Analysis:</strong> Compare content versions to identify the best performing variations</li>
+                  <li>• <strong>Template Downloads:</strong> Use provided Excel templates for consistent data formatting</li>
                 </ul>
               </div>
             </section>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Edit, Trash2, Save, BookOpen, Upload, Download, FileText } from 'lucide-react';
+import { X, Plus, Edit, Trash2, Save, BookOpen, Upload, Download, FileText, Eye } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import mammoth from 'mammoth';
+import StyleInstructionsPreview from './StyleInstructionsPreview';
 
 const StylePresetsModal = ({ isOpen, onClose, onApplyPreset, onPresetsChange }) => {
   const [presets, setPresets] = useState([]);
@@ -11,6 +12,7 @@ const StylePresetsModal = ({ isOpen, onClose, onApplyPreset, onPresetsChange }) 
   const [uploadingStyleGuide, setUploadingStyleGuide] = useState(false);
   const [styleGuideContent, setStyleGuideContent] = useState('');
   const [showStyleGuidePreview, setShowStyleGuidePreview] = useState(false);
+  const [previewingPreset, setPreviewingPreset] = useState(null);
   const { user } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -512,19 +514,49 @@ const StylePresetsModal = ({ isOpen, onClose, onApplyPreset, onPresetsChange }) 
                     {preset.description && (
                       <p className="text-xs text-gray-600 mb-2">{preset.description}</p>
                     )}
-                    <button
-                      onClick={() => {
-                        onApplyPreset(preset);
-                        onClose();
-                      }}
-                      className={`w-full text-left text-xs px-2 py-1 rounded hover:bg-blue-100 ${
-                        preset.isDefault ? 'bg-blue-100 text-blue-700' : 'bg-blue-50 text-blue-700'
-                      }`}
-                    >
-                      Apply Preset
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          onApplyPreset(preset);
+                          onClose();
+                        }}
+                        className={`flex-1 text-left text-xs px-2 py-1 rounded hover:bg-blue-100 ${
+                          preset.isDefault ? 'bg-blue-100 text-blue-700' : 'bg-blue-50 text-blue-700'
+                        }`}
+                      >
+                        Apply Preset
+                      </button>
+                      <button
+                        onClick={() => setPreviewingPreset(previewingPreset?.id === preset.id ? null : preset)}
+                        className="text-xs px-2 py-1 text-gray-600 hover:text-gray-800 border border-gray-300 rounded"
+                        title="Preview AI instructions"
+                      >
+                        <Eye size={12} />
+                      </button>
+                    </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {previewingPreset && (
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Preview: {previewingPreset.name}
+                  </h3>
+                  <button
+                    onClick={() => setPreviewingPreset(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <StyleInstructionsPreview 
+                  styleRules={previewingPreset.styleRules || previewingPreset.style_rules}
+                  forbiddenWords={previewingPreset.forbiddenWords || previewingPreset.forbidden_words || []}
+                  customLimits={previewingPreset.characterLimits || previewingPreset.character_limits || []}
+                />
               </div>
             )}
           </div>
@@ -684,6 +716,13 @@ const StylePresetsModal = ({ isOpen, onClose, onApplyPreset, onPresetsChange }) 
                     Words that should never appear in generated content
                   </p>
                 </div>
+
+                <StyleInstructionsPreview 
+                  styleRules={formData.styleRules}
+                  forbiddenWords={formData.forbiddenWords}
+                  customLimits={formData.characterLimits}
+                  className="mt-6"
+                />
 
                 <div className="flex justify-end space-x-3 pt-4 border-t">
                   <button

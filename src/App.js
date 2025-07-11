@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle } from 'lucide-react';
+import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle, BarChart3 } from 'lucide-react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginForm from './components/LoginForm';
 import CustomLimitsModal from './components/CustomLimitsModal';
@@ -9,6 +9,8 @@ import ExportModal from './components/ExportModal';
 import HistoryModal from './components/HistoryModal';
 import SettingsModal from './components/SettingsModal';
 import HelpModal from './components/HelpModal';
+import ExcelAnalysisModal from './components/ExcelAnalysisModal';
+import ActiveStylePreview from './components/ActiveStylePreview';
 import { generateContent } from './utils/api';
 
 // Authentication wrapper component
@@ -49,6 +51,7 @@ const MainApp = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [activePreset, setActivePreset] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState('default');
   const [hasCustomPresets, setHasCustomPresets] = useState(false);
@@ -132,7 +135,7 @@ const MainApp = () => {
     try {
       // Create dynamic prompts based on custom limits
       const limitsText = customLimits.map((limit, index) => 
-        `- ${limit.label}: Maximum ${limit.value} ${limit.type} including spaces`
+        `- ${limit.label}: MUST NOT exceed ${limit.value} ${limit.type} including spaces and punctuation`
       ).join('\n');
 
       const resultFormat = customLimits.reduce((acc, limit, index) => {
@@ -196,6 +199,7 @@ ${limitsText}
 
 For word limits, count individual words separated by spaces.
 For character limits, count all characters including spaces and punctuation.
+CRITICAL: Each version must be exactly under the specified character/word limit. Never exceed the limits.
 If there is insufficient original content to meaningfully fill a longer version, leave it blank.
 
 Respond with a JSON object in this exact format:
@@ -206,13 +210,27 @@ Your entire response must be valid JSON only. Do not include any other text or f
       const response = await generateContent(prompt, user.id);
       const parsedResponse = JSON.parse(response);
       
-      // Map the response to our version keys
+      // Map the response to our version keys and validate limits
       const newVersions = {};
       const newCopiedStates = {};
       
       customLimits.forEach((limit, index) => {
         const key = `version${index + 1}`;
-        newVersions[key] = parsedResponse[key] || '';
+        let content = parsedResponse[key] || '';
+        
+        // Validate and truncate if necessary
+        if (content && limit.type === 'characters' && content.length > parseInt(limit.value)) {
+          console.warn(`${limit.label} exceeded limit (${content.length}/${limit.value}), truncating...`);
+          content = content.substring(0, parseInt(limit.value));
+        } else if (content && limit.type === 'words') {
+          const words = content.trim().split(/\s+/).filter(word => word.length > 0);
+          if (words.length > parseInt(limit.value)) {
+            console.warn(`${limit.label} exceeded word limit (${words.length}/${limit.value}), truncating...`);
+            content = words.slice(0, parseInt(limit.value)).join(' ');
+          }
+        }
+        
+        newVersions[key] = content;
         newCopiedStates[key] = false;
       });
       
@@ -365,7 +383,7 @@ Your entire response must be valid JSON only. Do not include any other text or f
     }
 
     const limitsText = limitsToUse.map((limit, index) => 
-      `- ${limit.label}: Maximum ${limit.value} ${limit.type} including spaces`
+      `- ${limit.label}: MUST NOT exceed ${limit.value} ${limit.type} including spaces and punctuation`
     ).join('\n');
 
     const resultFormat = limitsToUse.reduce((acc, limit, index) => {
@@ -387,6 +405,7 @@ ${limitsText}
 
 For word limits, count individual words separated by spaces.
 For character limits, count all characters including spaces and punctuation.
+CRITICAL: Each version must be exactly under the specified character/word limit. Never exceed the limits.
 If there is insufficient original content to meaningfully fill a longer version, leave it blank.
 
 Respond with a JSON object in this exact format:
@@ -397,12 +416,26 @@ Your entire response must be valid JSON only. Do not include any other text or f
     const response = await generateContent(prompt, user.id);
     const parsedResponse = JSON.parse(response);
     
-    // Map the response to our version keys
+    // Map the response to our version keys and validate limits
     const newVersions = {};
     
     limitsToUse.forEach((limit, index) => {
       const key = `version${index + 1}`;
-      newVersions[key] = parsedResponse[key] || '';
+      let content = parsedResponse[key] || '';
+      
+      // Validate and truncate if necessary
+      if (content && limit.type === 'characters' && content.length > parseInt(limit.value)) {
+        console.warn(`${limit.label} exceeded limit (${content.length}/${limit.value}), truncating...`);
+        content = content.substring(0, parseInt(limit.value));
+      } else if (content && limit.type === 'words') {
+        const words = content.trim().split(/\s+/).filter(word => word.length > 0);
+        if (words.length > parseInt(limit.value)) {
+          console.warn(`${limit.label} exceeded word limit (${words.length}/${limit.value}), truncating...`);
+          content = words.slice(0, parseInt(limit.value)).join(' ');
+        }
+      }
+      
+      newVersions[key] = content;
     });
     
     return newVersions;
@@ -480,6 +513,13 @@ Your entire response must be valid JSON only. Do not include any other text or f
             >
               <Layers className="w-4 h-4" />
               <span>Batch Process</span>
+            </button>
+            <button
+              onClick={() => setShowAnalysisModal(true)}
+              className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 text-sm font-medium"
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>Excel Analysis</span>
             </button>
             <button
               onClick={() => setShowPresetsModal(true)}
@@ -576,6 +616,12 @@ Your entire response must be valid JSON only. Do not include any other text or f
           </div>
         </div>
 
+        <ActiveStylePreview 
+          activePreset={activePreset}
+          customLimits={customLimits}
+          onOpenStyleSettings={() => setShowPresetsModal(true)}
+        />
+
         <div className={`grid gap-6 ${
           customLimits.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
           customLimits.length === 2 ? 'md:grid-cols-2' :
@@ -591,12 +637,19 @@ Your entire response must be valid JSON only. Do not include any other text or f
             const isOverLimit = count > maxCount;
             
             return (
-              <div key={key} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div key={key} className={`bg-white rounded-lg shadow-sm border p-4 ${isOverLimit ? 'border-red-300' : 'border-gray-200'}`}>
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-lg font-medium text-gray-900">{limit.label}</h3>
-                  <span className="text-xs text-gray-500">
-                    ≤{limit.value} {limit.type === 'words' ? 'words' : 'chars'}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-xs font-medium ${isOverLimit ? 'text-red-600' : 'text-gray-500'}`}>
+                      {count}/{limit.value} {limit.type === 'words' ? 'words' : 'chars'}
+                    </span>
+                    {isOverLimit && (
+                      <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">
+                        OVER LIMIT
+                      </span>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="relative">
@@ -666,6 +719,11 @@ Your entire response must be valid JSON only. Do not include any other text or f
         customLimits={customLimits}
         activePreset={activePreset}
         onGenerate={generateBatchContent}
+      />
+      
+      <ExcelAnalysisModal
+        isOpen={showAnalysisModal}
+        onClose={() => setShowAnalysisModal(false)}
       />
       
       <ExportModal
