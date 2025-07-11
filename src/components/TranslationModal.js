@@ -6,7 +6,7 @@ import { identifyMultiLanguageSegments, detectLanguage, getConfidenceColor, getC
 import { generateStyleAwarePrompt, validateTranslation, generateQualityReport } from '../utils/styleGuide';
 import { getLanguageByCode } from '../utils/languageConfig';
 import LanguagePicker from './LanguagePicker';
-import StyleGuideSelector from './StyleGuideSelector';
+import DefaultStyleGuideCreator from './DefaultStyleGuideCreator';
 
 const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -18,9 +18,10 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
   const [translationResults, setTranslationResults] = useState([]);
   const [sourceLanguage, setSourceLanguage] = useState('cy'); // Default to Welsh
   const [targetLanguage, setTargetLanguage] = useState('en-gb'); // Default to British English
-  const [selectedStyleGuide, setSelectedStyleGuide] = useState('bbc'); // Default to BBC style guide
+  const [selectedStyleGuide] = useState('bbc'); // Default to BBC style guide
   const [detectedLanguage, setDetectedLanguage] = useState(null);
   const [qualityReport, setQualityReport] = useState(null);
+  const [showStyleGuideCreator, setShowStyleGuideCreator] = useState(false);
   const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
@@ -180,19 +181,19 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
 
   const downloadTemplate = () => {
     try {
-      // Create simplified template data with only Programme ID and Description Welsh
+      // Create generic template data for translation
       const templateData = [
         {
           'Programme ID': 'PROG_001',
-          'Description Welsh': 'Rhaglen newyddion ddyddiol sy\'n cyflwyno\'r digwyddiadau diweddaraf o Gymru a\'r byd.'
+          'Description': 'Sample content for translation - replace with your content'
         },
         {
           'Programme ID': 'PROG_002',
-          'Description Welsh': 'Rhaglen am fywyd cefn gwlad Cymru, yn cynnwys ffermio, natur, a thraddodiadau lleol.'
+          'Description': 'Another sample entry for translation purposes'
         },
         {
           'Programme ID': 'PROG_003',
-          'Description Welsh': 'Opera sebon Gymraeg am fywyd pobl mewn pentref dychmygol yng Nghymru.'
+          'Description': 'Third sample content entry for translation'
         }
       ];
 
@@ -201,40 +202,40 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
         throw new Error('XLSX library not loaded properly');
       }
 
-      console.log('Creating Welsh translation template...');
+      console.log('Creating translation template...');
       const worksheet = XLSX.utils.json_to_sheet(templateData);
       
       // Set column widths for better readability
       const columnWidths = [
         { wch: 15 }, // Programme ID
-        { wch: 80 }  // Description Welsh
+        { wch: 80 }  // Description
       ];
       worksheet['!cols'] = columnWidths;
 
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Welsh Translation Template');
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Translation Template');
       
-      const filename = 'welsh-translation-template.xlsx';
-      console.log('Downloading Welsh translation template:', filename);
+      const filename = 'translation-template.xlsx';
+      console.log('Downloading translation template:', filename);
       
       XLSX.writeFile(workbook, filename);
-      console.log('Welsh translation template download completed successfully');
+      console.log('Translation template download completed successfully');
     } catch (error) {
-      console.error('Error downloading Welsh translation template:', error);
+      console.error('Error downloading translation template:', error);
       alert(`Error downloading template: ${error.message}`);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-medium text-gray-900 flex items-center">
               <Languages className="w-5 h-5 mr-2 text-blue-600" />
-              Welsh to English Translation
+              Translation Tool
             </h2>
-            <p className="text-sm text-gray-500">Upload Excel schedules or documents containing Welsh text for translation to British English</p>
+            <p className="text-sm text-gray-500">Upload Excel schedules or documents for translation between languages</p>
           </div>
           <button
             onClick={onClose}
@@ -244,7 +245,7 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className="p-6 overflow-y-auto flex-1" style={{maxHeight: 'calc(90vh - 180px)'}}>
           <div className="space-y-6">
             
             {/* File Upload Section */}
@@ -325,14 +326,14 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
               <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-medium text-blue-900 mb-2 flex items-center">
                   <FileText className="w-4 h-4 mr-2" />
-                  Welsh Template Format
+                  Translation Template Format
                 </h4>
                 <p className="text-sm text-blue-800 mb-2">
-                  Use the "Excel Welsh Template.xlsx" file as a reference for the correct format when uploading Welsh schedules. 
-                  This template demonstrates the expected structure for Welsh content that requires translation to British English.
+                  Use the downloaded template as a reference for the correct format when uploading documents for translation. 
+                  This template demonstrates the expected structure for content that requires translation.
                 </p>
                 <p className="text-xs text-blue-700">
-                  <strong>Note:</strong> The template shows the format with Welsh information that the system can identify and translate automatically.
+                  <strong>Note:</strong> The template shows the format that the system can identify and translate automatically between language pairs.
                 </p>
               </div>
             </section>
@@ -353,12 +354,22 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                     onTargetLanguageChange={setTargetLanguage}
                   />
                   
-                  <StyleGuideSelector
-                    selectedStyleGuide={selectedStyleGuide}
-                    onStyleGuideChange={setSelectedStyleGuide}
-                    sourceLanguage={sourceLanguage}
-                    targetLanguage={targetLanguage}
-                  />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-gray-700">
+                        Style Guide Settings
+                      </h4>
+                      <button
+                        onClick={() => setShowStyleGuideCreator(true)}
+                        className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700"
+                      >
+                        Create Style Guide
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Create custom style guides for specific language pairs to ensure consistent translations.
+                    </p>
+                  </div>
                 </div>
               </section>
             )}
@@ -440,17 +451,17 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                 </h3>
                 
                 <div className="space-y-4">
-                  {translationResults.map((result, index) => (
+                  {translationResults.map((result) => (
                     <div key={result.id} className="bg-gray-50 rounded-lg p-4">
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Welsh (Original)</h4>
+                          <h4 className="font-medium text-gray-900 mb-2">Original ({getLanguageByCode(sourceLanguage)?.name || sourceLanguage})</h4>
                           <p className="text-sm text-gray-700 bg-white p-3 rounded border">
                             {result.originalText}
                           </p>
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-2">English (Translation)</h4>
+                          <h4 className="font-medium text-gray-900 mb-2">Translation ({getLanguageByCode(targetLanguage)?.name || targetLanguage})</h4>
                           <p className="text-sm text-gray-700 bg-white p-3 rounded border">
                             {result.translatedText}
                           </p>
@@ -573,6 +584,12 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
           </div>
         </div>
       </div>
+      
+      {/* Style Guide Creator Modal */}
+      <DefaultStyleGuideCreator 
+        isOpen={showStyleGuideCreator}
+        onClose={() => setShowStyleGuideCreator(false)}
+      />
     </div>
   );
 };
