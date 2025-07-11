@@ -138,11 +138,14 @@ const HelpModal = ({ isOpen, onClose }) => {
                     Excel Analysis <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded ml-2">NEW</span>
                   </h4>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Compare two versions of content</li>
-                    <li>• Quality scoring & readability analysis</li>
-                    <li>• PA TV style compliance checking</li>
-                    <li>• Detailed improvement suggestions</li>
-                    <li>• Export analysis results</li>
+                    <li>• Compare multiple content versions simultaneously</li>
+                    <li>• Comprehensive quality scoring (Basic 0-100 + Enhanced 0-170)</li>
+                    <li>• Readability analysis with Flesch Reading Ease scores</li>
+                    <li>• PA TV style compliance verification</li>
+                    <li>• Detailed improvement suggestions and recommendations</li>
+                    <li>• Character/word count analysis with optimal length assessment</li>
+                    <li>• Broadcasting standards compliance checking</li>
+                    <li>• Export comprehensive analysis results to Excel</li>
                   </ul>
                 </div>
 
@@ -178,20 +181,56 @@ const HelpModal = ({ isOpen, onClose }) => {
                     Excel Analysis Tool
                   </h4>
                   <p className="text-sm text-orange-800 mb-3">
-                    Compare and analyze two versions of content with advanced quality metrics and PA TV style compliance checking.
+                    Compare and analyse multiple versions of content with comprehensive quality metrics, readability scoring, and PA TV style compliance verification.
                   </p>
                   <div className="bg-white rounded-md p-3">
                     <h5 className="font-medium text-gray-900 mb-2">How to Use:</h5>
                     <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside">
-                      <li>Click "Excel Analysis" button</li>
-                      <li>Upload Excel file with Version 1 and Version 2 columns</li>
-                      <li>Map your columns to the analysis fields</li>
-                      <li>Click "Analyze Content" to see detailed comparison</li>
-                      <li>Export results or download template for future use</li>
+                      <li>Click "Excel Analysis" button in the main interface</li>
+                      <li>Upload Excel file with Version 1 and Version 2 columns (or use template)</li>
+                      <li>Map your columns to the analysis fields (Version 1, Version 2, Identifier)</li>
+                      <li>Click "Analyze Content" to generate detailed comparison report</li>
+                      <li>Review individual item analysis and overall quality metrics</li>
+                      <li>Export comprehensive results or download template for future use</li>
                     </ol>
                   </div>
+                  <div className="mt-3 bg-white rounded-md p-3">
+                    <h5 className="font-medium text-gray-900 mb-2">What Each Analysis Metric Measures:</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-700">
+                      <div>
+                        <strong>Basic Quality Score (0-100):</strong>
+                        <ul className="ml-2 mt-1 space-y-1">
+                          <li>• Length appropriateness (0-25 points)</li>
+                          <li>• Word count optimisation (0-20 points)</li>
+                          <li>• Readability score (0-30 points)</li>
+                          <li>• PA TV style compliance (0-25 points)</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <strong>Enhanced Quality Score (0-170):</strong>
+                        <ul className="ml-2 mt-1 space-y-1">
+                          <li>• Semantic richness (0-15 points)</li>
+                          <li>• Professional tone (0-15 points)</li>
+                          <li>• Broadcasting standards (0-10 points)</li>
+                          <li>• Content completeness (0-10 points)</li>
+                          <li>• Efficiency rating (0-10 points)</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 bg-white rounded-md p-3">
+                    <h5 className="font-medium text-gray-900 mb-2">Quality Grade System:</h5>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
+                      <div>• <strong>Excellent (90-100%):</strong> Exceptional quality</div>
+                      <div>• <strong>Very Good (80-89%):</strong> High standard</div>
+                      <div>• <strong>Good (70-79%):</strong> Above average</div>
+                      <div>• <strong>Fair (60-69%):</strong> Acceptable quality</div>
+                      <div>• <strong>Poor (50-59%):</strong> Below standard</div>
+                      <div>• <strong>Needs Revision (&lt;50%):</strong> Requires improvement</div>
+                    </div>
+                  </div>
                   <div className="mt-3 text-xs text-orange-700">
-                    <strong>Features:</strong> Quality scoring, readability analysis, style compliance, improvement suggestions, overall reporting
+                    <strong>Advanced Features:</strong> Comparative analysis, strength identification, issue detection, improvement suggestions, overall reporting with recommendations, grade distribution analysis
                   </div>
                 </div>
 

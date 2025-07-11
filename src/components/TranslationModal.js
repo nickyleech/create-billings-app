@@ -24,11 +24,11 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
       setTranslationResults([]);
       
       // Validate file type
-      const allowedTypes = ['.rtf', '.doc', '.docx', '.txt'];
+      const allowedTypes = ['.xlsx', '.xls', '.rtf', '.doc', '.docx', '.txt'];
       const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
       
       if (!allowedTypes.includes(fileExtension)) {
-        setError('Please select a valid file type: RTF, DOC, DOCX, or TXT');
+        setError('Please select a valid file type: XLSX, XLS, RTF, DOC, DOCX, or TXT');
         setSelectedFile(null);
         return;
       }
@@ -145,7 +145,7 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
               <Languages className="w-5 h-5 mr-2 text-blue-600" />
               Welsh to English Translation
             </h2>
-            <p className="text-sm text-gray-500">Upload documents containing Welsh text for translation to British English</p>
+            <p className="text-sm text-gray-500">Upload Excel schedules or documents containing Welsh text for translation to British English</p>
           </div>
           <button
             onClick={onClose}
@@ -162,7 +162,7 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
             <section>
               <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
                 <Upload className="w-5 h-5 mr-2 text-green-600" />
-                Upload Document
+                Upload Excel Schedule
               </h3>
               
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -170,7 +170,7 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileSelect}
-                  accept=".rtf,.doc,.docx,.txt"
+                  accept=".xlsx,.xls,.rtf,.doc,.docx,.txt"
                   className="hidden"
                 />
                 
@@ -178,17 +178,26 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                   <div>
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 mb-2">
-                      Click to select a file or drag and drop
+                      Click to select an Excel schedule or drag and drop
                     </p>
                     <p className="text-sm text-gray-500 mb-4">
-                      Supported formats: RTF, DOC, DOCX, TXT
+                      Supported formats: XLSX, XLS, RTF, DOC, DOCX, TXT
                     </p>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
-                    >
-                      Choose File
-                    </button>
+                    <div className="flex justify-center space-x-3">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                      >
+                        Choose File
+                      </button>
+                      <a
+                        href="/welsh-translation-template.xlsx"
+                        download="Excel Welsh Template.xlsx"
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
+                      >
+                        Download Template
+                      </a>
+                    </div>
                   </div>
                 ) : (
                   <div>
@@ -223,6 +232,20 @@ const TranslationModal = ({ isOpen, onClose, user, generateContent }) => {
                     </div>
                   </div>
                 )}
+              </div>
+              
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 mb-2 flex items-center">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Welsh Template Format
+                </h4>
+                <p className="text-sm text-blue-800 mb-2">
+                  Use the "Excel Welsh Template.xlsx" file as a reference for the correct format when uploading Welsh schedules. 
+                  This template demonstrates the expected structure for Welsh content that requires translation to British English.
+                </p>
+                <p className="text-xs text-blue-700">
+                  <strong>Note:</strong> The template shows the format with Welsh information that the system can identify and translate automatically.
+                </p>
               </div>
             </section>
 
