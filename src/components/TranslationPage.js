@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Download, FileText, Languages, Loader, CheckCircle, AlertCircle, ArrowLeft, Home } from 'lucide-react';
+import { Upload, Download, FileText, Languages, Loader, CheckCircle, AlertCircle, Home } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { parseDocument, reconstructDocument } from '../utils/parseDocument';
 import { identifyMultiLanguageSegments, detectLanguage, getConfidenceColor, getConfidenceDescription } from '../utils/languageDetection';
@@ -233,10 +233,10 @@ const TranslationPage = ({ user, generateContent, onNavigateBack }) => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={onNavigateBack}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
               >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Billing Tool</span>
+                <Home className="w-4 h-4" />
+                <span>🏠 Home</span>
               </button>
               <div className="h-6 w-px bg-gray-300"></div>
               <div className="flex items-center space-x-2">
@@ -246,15 +246,6 @@ const TranslationPage = ({ user, generateContent, onNavigateBack }) => {
                   <p className="text-sm text-gray-500">Professional translation workflow for all language pairs</p>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={onNavigateBack}
-                className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Home className="w-4 h-4" />
-                <span>Billing Tool</span>
-              </button>
             </div>
           </div>
         </div>
@@ -660,9 +651,10 @@ const TranslationPage = ({ user, generateContent, onNavigateBack }) => {
             </div>
             <button
               onClick={onNavigateBack}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
             >
-              Back to Billing Tool
+              <Home className="w-4 h-4" />
+              <span>🏠 Home</span>
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle, BarChart3, Languages, FileText, Home } from 'lucide-react';
+import { Copy, Check, LogOut, User, Settings, Sliders, Palette, Layers, Download, ChevronDown, History, HelpCircle, BarChart3, Home } from 'lucide-react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginForm from './components/LoginForm';
 import HomePage from './components/HomePage';
@@ -494,49 +494,37 @@ Your entire response must be valid JSON only. Do not include any other text or f
         
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => setCurrentSection('translation')}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
-              currentSection === 'translation' 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'text-gray-600 hover:text-gray-900'
+            onClick={() => setCurrentSection('home')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+              currentSection === 'home' 
+                ? 'bg-blue-100 text-blue-700 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
-            <Languages className="w-4 h-4" />
-            <span>Translation</span>
+            <Home className="w-4 h-4" />
+            <span>Home</span>
           </button>
-          {currentSection === 'translation' && (
+          {(currentSection === 'translation' || currentSection === 'billing') && (
             <button
-              onClick={() => setSimpleMode(!simpleMode)}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors text-xs ${
-                simpleMode 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-gray-100 text-gray-600 hover:text-gray-900'
+              onClick={() => {
+                if (currentSection === 'translation') {
+                  setSimpleMode(!simpleMode);
+                } else if (currentSection === 'billing') {
+                  setSimpleBillingMode(!simpleBillingMode);
+                }
+              }}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium ${
+                (currentSection === 'translation' && simpleMode) || (currentSection === 'billing' && simpleBillingMode)
+                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105' 
+                  : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 hover:from-gray-200 hover:to-gray-300 shadow-md hover:shadow-lg'
               }`}
             >
-              <span>{simpleMode ? 'Switch to Advanced' : 'Switch to Simple'}</span>
-            </button>
-          )}
-          <button
-            onClick={() => setCurrentSection('billing')}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
-              currentSection === 'billing' 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>Billing</span>
-          </button>
-          {currentSection === 'billing' && (
-            <button
-              onClick={() => setSimpleBillingMode(!simpleBillingMode)}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors text-xs ${
-                simpleBillingMode 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-gray-100 text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <span>{simpleBillingMode ? 'Switch to Advanced' : 'Switch to Simple'}</span>
+              <span>
+                {(currentSection === 'translation' && simpleMode) || (currentSection === 'billing' && simpleBillingMode)
+                  ? '✨ Switch to Advanced' 
+                  : '🔄 Switch to Simple'
+                }
+              </span>
             </button>
           )}
           <button
