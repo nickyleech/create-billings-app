@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Upload, X, Download, BarChart3, FileText, AlertCircle, TrendingUp, Award, Target, PieChart, Star } from 'lucide-react';
+import { Upload, X, Download, BarChart3, FileText, AlertCircle, TrendingUp, Award, Target, Star } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { compareContent, generateContentReport } from '../utils/content-analyzer';
+import { compareContent, compareThreeContent, generateContentReport } from '../utils/content-analyzer';
 
 const ExcelAnalysisModal = ({ isOpen, onClose }) => {
   const [file, setFile] = useState(null);
@@ -10,8 +10,10 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
   const [columnMapping, setColumnMapping] = useState({
     version1: '',
     version2: '',
+    version3: '',
     identifier: ''
   });
+  const [compareMode, setCompareMode] = useState('two'); // 'two' or 'three'
   const [analysisResults, setAnalysisResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -51,7 +53,12 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
 
   const performAnalysis = () => {
     if (!data.length || !columnMapping.version1 || !columnMapping.version2) {
-      alert('Please upload a file and map both version columns');
+      alert('Please upload a file and map version columns');
+      return;
+    }
+
+    if (compareMode === 'three' && !columnMapping.version3) {
+      alert('Please map the third version column for three-column comparison');
       return;
     }
 
@@ -60,23 +67,41 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
     const results = data.map((row, index) => {
       const version1Text = row[columnMapping.version1] || '';
       const version2Text = row[columnMapping.version2] || '';
+      const version3Text = compareMode === 'three' ? (row[columnMapping.version3] || '') : '';
       const identifier = row[columnMapping.identifier] || `Row ${index + 1}`;
       
-      const comparison = compareContent(version1Text, version2Text);
-      
-      return {
-        identifier,
-        version1: version1Text,
-        version2: version2Text,
-        analysis1: comparison.analysis1,
-        analysis2: comparison.analysis2,
-        comparison: comparison.comparison,
-        winner: comparison.comparison.winner
-      };
+      let comparison;
+      if (compareMode === 'three') {
+        comparison = compareThreeContent(version1Text, version2Text, version3Text);
+        return {
+          identifier,
+          version1: version1Text,
+          version2: version2Text,
+          version3: version3Text,
+          analysis1: comparison.analysis1,
+          analysis2: comparison.analysis2,
+          analysis3: comparison.analysis3,
+          comparison: comparison.comparison,
+          winner: comparison.comparison.winner
+        };
+      } else {
+        comparison = compareContent(version1Text, version2Text);
+        return {
+          identifier,
+          version1: version1Text,
+          version2: version2Text,
+          analysis1: comparison.analysis1,
+          analysis2: comparison.analysis2,
+          comparison: comparison.comparison,
+          winner: comparison.comparison.winner
+        };
+      }
     });
 
     // Generate overall report
-    const allAnalyses = results.flatMap(r => [r.analysis1, r.analysis2]);
+    const allAnalyses = compareMode === 'three' 
+      ? results.flatMap(r => [r.analysis1, r.analysis2, r.analysis3])
+      : results.flatMap(r => [r.analysis1, r.analysis2]);
     const report = generateContentReport(allAnalyses);
     
     setAnalysisResults(results);
@@ -85,7 +110,22 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
   };
 
   const downloadTemplate = () => {
-    const templateData = [
+    const templateData = compareMode === 'three' ? [
+      {
+        'Item ID': 'ITEM_001',
+        'Version 1': 'This is the first version of content that needs to be analyzed for quality metrics.',
+        'Version 2': 'This is the second version of content that will be compared against the first version.',
+        'Version 3': 'This is the third version of content for comprehensive three-way comparison.',
+        'Notes': 'Optional notes about the content'
+      },
+      {
+        'Item ID': 'ITEM_002',
+        'Version 1': 'Another example of content that could be shorter and more concise.',
+        'Version 2': 'Shorter, more concise content example.',
+        'Version 3': 'Even more concise version for comparison.',
+        'Notes': 'Example showing length optimization across three versions'
+      }
+    ] : [
       {
         'Item ID': 'ITEM_001',
         'Version 1': 'This is the first version of content that needs to be analyzed for quality metrics.',
@@ -103,37 +143,55 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
     const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
-    XLSX.writeFile(workbook, 'content-analysis-template.xlsx');
+    XLSX.writeFile(workbook, `content-analysis-template-${compareMode}-column.xlsx`);
   };
 
   const exportResults = () => {
     if (!analysisResults) return;
 
-    const exportData = analysisResults.map(result => ({
-      'Identifier': result.identifier,
-      'Version 1': result.version1,
-      'Version 2': result.version2,
-      'V1 Length': result.analysis1.length,
-      'V2 Length': result.analysis2.length,
-      'V1 Word Count': result.analysis1.wordCount,
-      'V2 Word Count': result.analysis2.wordCount,
-      'V1 Readability': result.analysis1.readabilityScore,
-      'V2 Readability': result.analysis2.readabilityScore,
-      'V1 Quality Score': result.analysis1.qualityScore,
-      'V2 Quality Score': result.analysis2.qualityScore,
-      'V1 Enhanced Score': result.analysis1.enhancedQualityScore,
-      'V2 Enhanced Score': result.analysis2.enhancedQualityScore,
-      'Winner': result.winner,
-      'V1 Issues': result.analysis1.issues.join('; '),
-      'V2 Issues': result.analysis2.issues.join('; '),
-      'V1 Strengths': result.analysis1.strengths.join('; '),
-      'V2 Strengths': result.analysis2.strengths.join('; ')
-    }));
+    const exportData = analysisResults.map(result => {
+      const baseData = {
+        'Identifier': result.identifier,
+        'Version 1': result.version1,
+        'Version 2': result.version2,
+        'V1 Length': result.analysis1.length,
+        'V2 Length': result.analysis2.length,
+        'V1 Word Count': result.analysis1.wordCount,
+        'V2 Word Count': result.analysis2.wordCount,
+        'V1 Readability': result.analysis1.readabilityScore,
+        'V2 Readability': result.analysis2.readabilityScore,
+        'V1 Quality Score': result.analysis1.qualityScore,
+        'V2 Quality Score': result.analysis2.qualityScore,
+        'V1 Enhanced Score': result.analysis1.enhancedQualityScore,
+        'V2 Enhanced Score': result.analysis2.enhancedQualityScore,
+        'Winner': result.winner,
+        'V1 Issues': result.analysis1.issues.join('; '),
+        'V2 Issues': result.analysis2.issues.join('; '),
+        'V1 Strengths': result.analysis1.strengths.join('; '),
+        'V2 Strengths': result.analysis2.strengths.join('; ')
+      };
+
+      if (compareMode === 'three' && result.analysis3) {
+        return {
+          ...baseData,
+          'Version 3': result.version3,
+          'V3 Length': result.analysis3.length,
+          'V3 Word Count': result.analysis3.wordCount,
+          'V3 Readability': result.analysis3.readabilityScore,
+          'V3 Quality Score': result.analysis3.qualityScore,
+          'V3 Enhanced Score': result.analysis3.enhancedQualityScore,
+          'V3 Issues': result.analysis3.issues.join('; '),
+          'V3 Strengths': result.analysis3.strengths.join('; ')
+        };
+      }
+
+      return baseData;
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Analysis Results');
-    XLSX.writeFile(workbook, `content-analysis-results-${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(workbook, `content-analysis-results-${compareMode}-column-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   if (!isOpen) return null;
@@ -156,7 +214,7 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
           <div className="space-y-4">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
               <Upload className="mx-auto mb-4 text-gray-400" size={48} />
-              <p className="text-gray-600 mb-4">Upload Excel file with two columns to compare</p>
+              <p className="text-gray-600 mb-4">Upload Excel file with {compareMode === 'two' ? 'two' : 'three'} content columns to compare</p>
               <input
                 type="file"
                 accept=".xlsx,.xls"
@@ -187,6 +245,38 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                 </p>
               </div>
             )}
+
+            {/* Mode Selection */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Comparison Mode</h3>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="compareMode"
+                    value="two"
+                    checked={compareMode === 'two'}
+                    onChange={(e) => {
+                      setCompareMode(e.target.value);
+                      setColumnMapping({...columnMapping, version3: ''});
+                    }}
+                    className="mr-2"
+                  />
+                  Two Columns
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="compareMode"
+                    value="three"
+                    checked={compareMode === 'three'}
+                    onChange={(e) => setCompareMode(e.target.value)}
+                    className="mr-2"
+                  />
+                  Three Columns
+                </label>
+              </div>
+            </div>
 
             {/* Column Mapping */}
             {columns.length > 0 && (
@@ -223,6 +313,23 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                       ))}
                     </select>
                   </div>
+                  {compareMode === 'three' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Version 3 Column
+                      </label>
+                      <select
+                        value={columnMapping.version3}
+                        onChange={(e) => setColumnMapping({...columnMapping, version3: e.target.value})}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      >
+                        <option value="">Select column...</option>
+                        {columns.map(col => (
+                          <option key={col} value={col}>{col}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Identifier Column (Optional)
@@ -241,7 +348,7 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                 </div>
                 <button
                   onClick={performAnalysis}
-                  disabled={!columnMapping.version1 || !columnMapping.version2 || isAnalyzing}
+                  disabled={!columnMapping.version1 || !columnMapping.version2 || (compareMode === 'three' && !columnMapping.version3) || isAnalyzing}
                   className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-4 py-2 rounded"
                 >
                   {isAnalyzing ? 'Analyzing...' : 'Analyze Content'}
@@ -267,7 +374,7 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                 </div>
                 
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-3 gap-4 text-center mb-4">
+                  <div className={`grid gap-4 text-center mb-4 ${compareMode === 'three' ? 'grid-cols-4' : 'grid-cols-3'}`}>
                     <div>
                       <p className="text-2xl font-bold text-blue-600">
                         {analysisResults.filter(r => r.winner === 'version1').length}
@@ -280,6 +387,14 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                       </p>
                       <p className="text-sm text-gray-600">Version 2 Wins</p>
                     </div>
+                    {compareMode === 'three' && (
+                      <div>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {analysisResults.filter(r => r.winner === 'version3').length}
+                        </p>
+                        <p className="text-sm text-gray-600">Version 3 Wins</p>
+                      </div>
+                    )}
                     <div>
                       <p className="text-2xl font-bold text-gray-600">
                         {analysisResults.filter(r => r.winner === 'tie').length}
@@ -297,14 +412,19 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                       {(() => {
                         const grades = { 'Excellent (90-100%)': 0, 'Very Good (80-89%)': 0, 'Good (70-79%)': 0, 'Fair (60-69%)': 0, 'Poor (50-59%)': 0, 'Needs Revision (<50%)': 0 };
                         analysisResults.forEach(result => {
-                          [result.analysis1, result.analysis2].forEach(analysis => {
-                            const percentage = (analysis.enhancedQualityScore / 170) * 100;
-                            if (percentage >= 90) grades['Excellent (90-100%)']++;
-                            else if (percentage >= 80) grades['Very Good (80-89%)']++;
-                            else if (percentage >= 70) grades['Good (70-79%)']++;
-                            else if (percentage >= 60) grades['Fair (60-69%)']++;
-                            else if (percentage >= 50) grades['Poor (50-59%)']++;
-                            else grades['Needs Revision (<50%)']++;
+                          const analyses = compareMode === 'three' 
+                            ? [result.analysis1, result.analysis2, result.analysis3]
+                            : [result.analysis1, result.analysis2];
+                          analyses.forEach(analysis => {
+                            if (analysis) {
+                              const percentage = (analysis.enhancedQualityScore / 170) * 100;
+                              if (percentage >= 90) grades['Excellent (90-100%)']++;
+                              else if (percentage >= 80) grades['Very Good (80-89%)']++;
+                              else if (percentage >= 70) grades['Good (70-79%)']++;
+                              else if (percentage >= 60) grades['Fair (60-69%)']++;
+                              else if (percentage >= 50) grades['Poor (50-59%)']++;
+                              else grades['Needs Revision (<50%)']++;
+                            }
                           });
                         });
                         return Object.entries(grades).map(([grade, count]) => (
@@ -358,13 +478,14 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                         <span className={`px-2 py-1 text-xs rounded ${
                           result.winner === 'version1' ? 'bg-blue-100 text-blue-800' :
                           result.winner === 'version2' ? 'bg-green-100 text-green-800' :
+                          result.winner === 'version3' ? 'bg-purple-100 text-purple-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
                           {result.winner === 'tie' ? 'Tie' : `Version ${result.winner.slice(-1)} Wins`}
                         </span>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className={`grid gap-4 text-sm ${compareMode === 'three' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                         <div className="space-y-2">
                           <p className="font-medium">Version 1</p>
                           <div className="text-xs space-y-1">
@@ -478,6 +599,65 @@ const ExcelAnalysisModal = ({ isOpen, onClose }) => {
                             </div>
                           )}
                         </div>
+                        
+                        {compareMode === 'three' && result.analysis3 && (
+                          <div className="space-y-2">
+                            <p className="font-medium">Version 3</p>
+                            <div className="text-xs space-y-1">
+                              <p className="text-gray-600">
+                                {result.analysis3.length} chars, {result.analysis3.wordCount} words, 
+                                {result.analysis3.readabilityScore}% readable
+                              </p>
+                              <div className="flex items-center space-x-2 flex-wrap">
+                                <span className="text-blue-600 font-medium">Basic: {result.analysis3.qualityScore}/100</span>
+                                <span className="text-purple-600 font-medium">Enhanced: {result.analysis3.enhancedQualityScore}/170</span>
+                                <span className={`px-2 py-1 rounded-full text-xs ${getQualityGrade(result.analysis3.enhancedQualityScore).color}`}>
+                                  {getQualityGrade(result.analysis3.enhancedQualityScore).grade}
+                                </span>
+                              </div>
+                              {result.analysis3.scoreBreakdown && (
+                                <div className="bg-gray-50 p-2 rounded text-xs">
+                                  <p className="font-medium mb-1">Score Breakdown:</p>
+                                  <div className="grid grid-cols-2 gap-1">
+                                    <span>Length: {result.analysis3.scoreBreakdown.basic.length}/25</span>
+                                    <span>Words: {result.analysis3.scoreBreakdown.basic.wordCount}/20</span>
+                                    <span>Readability: {result.analysis3.scoreBreakdown.basic.readability}/30</span>
+                                    <span>Style: {result.analysis3.scoreBreakdown.basic.styleCompliance}/25</span>
+                                    <span>Semantic: {result.analysis3.scoreBreakdown.enhanced.semanticRichness}/15</span>
+                                    <span>Tone: {result.analysis3.scoreBreakdown.enhanced.professionalTone}/15</span>
+                                    <span>Broadcast: {result.analysis3.scoreBreakdown.enhanced.broadcastingStandards}/10</span>
+                                    <span>Complete: {result.analysis3.scoreBreakdown.enhanced.contentCompleteness}/10</span>
+                                    <span>Efficiency: {result.analysis3.scoreBreakdown.enhanced.efficiency}/10</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            {result.analysis3.strengths.length > 0 && (
+                              <div className="text-xs">
+                                <p className="font-medium text-green-600 flex items-center">
+                                  <Award size={12} className="mr-1" /> Strengths:
+                                </p>
+                                <ul className="text-gray-600 ml-4">
+                                  {result.analysis3.strengths.slice(0, 2).map((strength, i) => (
+                                    <li key={i}>• {strength}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {result.analysis3.issues.length > 0 && (
+                              <div className="text-xs">
+                                <p className="font-medium text-red-600 flex items-center">
+                                  <AlertCircle size={12} className="mr-1" /> Issues:
+                                </p>
+                                <ul className="text-gray-600 ml-4">
+                                  {result.analysis3.issues.slice(0, 2).map((issue, i) => (
+                                    <li key={i}>• {issue}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                       
                       {result.comparison.improvements.length > 0 && (

@@ -306,6 +306,70 @@ export const compareContent = (content1, content2) => {
   };
 };
 
+export const compareThreeContent = (content1, content2, content3) => {
+  const analysis1 = analyzeContent(content1);
+  const analysis2 = analyzeContent(content2);
+  const analysis3 = analyzeContent(content3);
+  
+  const analyses = [analysis1, analysis2, analysis3];
+  const scores = [analysis1.enhancedQualityScore, analysis2.enhancedQualityScore, analysis3.enhancedQualityScore];
+  
+  // Find the best version
+  const maxScore = Math.max(...scores);
+  const winnerIndex = scores.indexOf(maxScore);
+  const winner = `version${winnerIndex + 1}`;
+  
+  // Check for ties
+  const maxScoreCount = scores.filter(score => score === maxScore).length;
+  const finalWinner = maxScoreCount > 1 ? 'tie' : winner;
+  
+  const comparison = {
+    winner: finalWinner,
+    scores: scores,
+    rankings: scores.map((score, index) => ({ 
+      version: `version${index + 1}`, 
+      score,
+      rank: scores.filter(s => s > score).length + 1
+    })).sort((a, b) => b.score - a.score),
+    improvements: [],
+    keyDifferences: []
+  };
+  
+  // Identify key differences
+  const lengths = [analysis1.length, analysis2.length, analysis3.length];
+  const readabilityScores = [analysis1.readabilityScore, analysis2.readabilityScore, analysis3.readabilityScore];
+  
+  if (Math.max(...lengths) - Math.min(...lengths) > 50) {
+    comparison.keyDifferences.push(`Length variation: ${Math.min(...lengths)} to ${Math.max(...lengths)} characters`);
+  }
+  
+  if (Math.max(...readabilityScores) - Math.min(...readabilityScores) > 10) {
+    comparison.keyDifferences.push(`Readability variation: ${Math.min(...readabilityScores)} to ${Math.max(...readabilityScores)}`);
+  }
+  
+  // Generate improvement suggestions for lower-scoring versions
+  const suggestions = new Set();
+  
+  analyses.forEach((analysis, index) => {
+    if (analysis.enhancedQualityScore < maxScore) {
+      analysis.suggestions.forEach(suggestion => suggestions.add(suggestion));
+    }
+  });
+  
+  if (finalWinner !== 'tie') {
+    suggestions.add(`Consider adopting elements from Version ${winnerIndex + 1}, which scored highest`);
+  }
+  
+  comparison.improvements = Array.from(suggestions);
+  
+  return {
+    analysis1,
+    analysis2,
+    analysis3,
+    comparison
+  };
+};
+
 export const generateContentReport = (analyses) => {
   const totalItems = analyses.length;
   const avgQualityScore = analyses.reduce((sum, a) => sum + a.qualityScore, 0) / totalItems;
@@ -413,7 +477,6 @@ const calculateProfessionalTone = (text, words) => {
   // Formality Level (0-8 points)
   const informalWords = text.match(/\b(gonna|wanna|yeah|ok|cool|awesome|stuff|things|guy|guys)\b/gi) || [];
   const formalWords = text.match(/\b(programme|series|documentary|broadcast|transmission|presenter|featuring|including)\b/gi) || [];
-  const contractions = text.match(/\b\w+[''](?:re|ve|ll|d|t|s)\b/gi) || [];
   
   if (informalWords.length === 0 && formalWords.length > 0) score += 8;
   else if (informalWords.length <= 1 && formalWords.length > 0) score += 6;
