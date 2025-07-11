@@ -10,7 +10,6 @@ import HistoryModal from './components/HistoryModal';
 import SettingsModal from './components/SettingsModal';
 import HelpModal from './components/HelpModal';
 import ExcelAnalysisModal from './components/ExcelAnalysisModal';
-import TranslationModal from './components/TranslationModal';
 import TranslationPage from './components/TranslationPage';
 import ActiveStylePreview from './components/ActiveStylePreview';
 import { generateContent } from './utils/api';
@@ -54,7 +53,6 @@ const MainApp = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
-  const [showTranslationModal, setShowTranslationModal] = useState(false);
   const [currentSection, setCurrentSection] = useState('billing'); // 'billing' or 'translation'
   const [activePreset, setActivePreset] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState('default');
@@ -821,12 +819,6 @@ Your entire response must be valid JSON only. Do not include any other text or f
         onClose={() => setShowHelpModal(false)}
       />
       
-      <TranslationModal
-        isOpen={showTranslationModal}
-        onClose={() => setShowTranslationModal(false)}
-        user={user}
-        generateContent={generateContent}
-      />
     </div>
   );
 };
